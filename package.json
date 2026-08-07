@@ -17,7 +17,7 @@
     "cors": "^2.8.5",
     "docker-compose": "^1.2.0",
     "dotenv": "^16.4.7",
-    "electron": "^24.0.0",
+    "electron": "^39.8.10",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "mammoth": "^1.9.0",
