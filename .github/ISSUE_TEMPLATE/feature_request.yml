@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a bounded B.O.B. product change
+title: "[Feature]: "
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What concrete friction does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the user-visible result, not a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+      description: What belongs in this change, and what explicitly does not?
+    validations:
+      required: true
+  - type: textarea
+    id: bob
+    attributes:
+      label: Why B.O.B. should own this
+      description: Why is this part of the personal control plane rather than something an existing agent should simply do?
+    validations:
+      required: true
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact areas
+      options:
+        - label: This may affect agent authority.
+        - label: This may affect AI cost or billing behavior.
+        - label: This may add a new top-level surface.
+        - label: This may add infrastructure or a background service.
+        - label: This may affect canonical user data.
+  - type: textarea
+    id: records
+    attributes:
+      label: Decision records
+      description: Note any PRD, RFC, or ADR that should be created or changed.
