@@ -7,159 +7,103 @@
 
 The revival should not incrementally rehabilitate every old subsystem. Git history already preserves the experiments. The active tree should become a clear representation of the current product.
 
-Implementation is divided into bounded vertical slices. Each slice must leave the repository in an understandable state.
+The current first-alpha route is being resolved through the canonical Wayfinder map. This plan is therefore sequencing context, not authority to implement unresolved architecture. Before production implementation begins, the Wayfinder convergence audit must pass and the resulting build-ready specification and tracer-bullet tickets become the immediate implementation plan.
 
 The architectural invariant is:
 
 > **B.O.B. is the agent. Models, inference runtimes, provider CLIs, and tools are capabilities behind B.O.B.**
 
-## Phase 0: decision baseline
+## Phase 0: decision convergence
 
 Deliverables:
 
-- product definition;
-- architecture specification;
-- PRDs, RFCs, and ADRs;
+- resolved first-alpha Wayfinder decision route;
+- reconciled product definition and architecture specification;
+- required PRDs, RFCs, and ADRs in unambiguous lifecycle state;
 - governance and contribution rules;
 - explicit legacy/non-authoritative statement;
-- implementation acceptance criteria.
+- build-ready first-alpha specification;
+- tracer-bullet implementation tickets with real blockers and acceptance evidence.
 
-Exit condition: product and architecture records are accepted before structural rewrite begins.
+Exit condition: the convergence audit in `docs/governance/WAYFINDER.md` passes. No coding agent is required to invent product behavior, architecture, persistence semantics, provider/cost behavior, authority boundaries, or validation policy.
 
-## Phase 1: application foundation
+## First-alpha implementation destination
 
-Scope:
+The current resolved Wayfinder route establishes these already-settled boundaries:
 
-- create the approved desktop shell;
-- establish Rust core and typed frontend boundary;
-- establish local versioned persistence;
-- implement secure settings and protected credential references;
-- remove privileged renderer patterns;
-- establish local build, test, format, and type-check commands for developer/coding-agent validation;
-- implement migration/export skeletons.
+- Tauri 2 desktop application with Rust privileged core;
+- framework-free TypeScript + Vite frontend for the alpha unless measured complexity demonstrates a need to change;
+- Windows 11 x64 as the first supported alpha platform;
+- Today-first interaction shell with Inbox, B.O.B. Chat, Settings, accessibility, and overwhelmed/reorientation behavior;
+- one user-facing B.O.B. identity;
+- Gemini Developer API Free as the sole required first-alpha inference backend;
+- guided 2–3 step Gemini credential onboarding through Google AI Studio;
+- credentials stored outside ordinary application state through the resolved OS secret-store boundary;
+- deterministic planning remains useful when inference is unavailable;
+- Delegate/tool execution, a second inference backend, and local inference are deferred beyond the first alpha.
 
-No AI inference integration is required for this phase. GitHub Actions remain intentionally minimal unless a later change demonstrates a specific low-cost gate is worth maintaining.
+Unresolved Wayfinder tickets still govern persistence/recovery details, B.O.B. agent-core/runtime contract, remaining credential/runtime-discovery policy, and validation/packaging. Their resolution may refine this destination before implementation starts.
 
-Exit criteria:
+## Expected tracer-bullet sequence
 
-- clean install/build path;
-- app launches to a minimal shell;
-- UI cannot directly access unrestricted native APIs;
-- local data survives restart;
-- persistence recovery is tested;
-- architecture docs match implementation;
-- the implementing agent can report reproducible local validation evidence in a pull request.
+The exact implementation tickets must be generated from the final build-ready specification rather than copied mechanically from this document. The expected vertical sequence is:
 
-## Phase 2: Today + Inbox vertical slice
+### Application foundation and canonical local state
 
-Scope:
+Establish the approved Tauri/Rust/TypeScript boundary, canonical local persistence, migration/recovery behavior, protected credential abstraction, and reproducible local development validation.
 
-- quick capture;
-- item lifecycle;
-- Today surface;
-- focus items;
-- manual day blocks;
-- next-action selection;
-- completion and deferral;
-- deterministic replanning;
-- accessibility baseline.
+### Today + Inbox deterministic workflow
 
-Exit criteria:
+Implement capture, item lifecycle, Today hierarchy, focus items, manual day blocks, completion/deferral, deterministic replanning, restart continuity, and accessibility baseline without requiring inference.
 
-- B.O.B. is useful without AI;
-- a fresh user can capture, plan, start, complete, defer, and replan work;
-- restart preserves state;
-- no inference runtime is required.
+### Gemini onboarding and B.O.B. Assist
 
-## Phase 3: B.O.B. agent core + first subscription-backed inference adapter
+Implement the resolved Gemini Developer API Free credential flow, secure validation/storage state, B.O.B. agent-core contract, bounded context assembly, normalized inference invocation, proposal validation, and preview-before-apply behavior.
 
-Scope:
+### Continuity and failure behavior
 
-- implement B.O.B. as the single user-facing agent service;
-- implement the internal runtime/inference adapter contract from RFC-0002;
-- detect supported Claude subscription-path installation/authentication state;
-- invoke the documented machine-consumable interface;
-- build bounded B.O.B. context packages;
-- show responses as B.O.B. responses, not as a second agent identity;
-- parse structured proposals;
-- validate and preview proposed B.O.B. actions;
-- enforce subscription-first cost policy.
+Verify resume/handoff, reorientation, compact conversation/work continuity, inference-unavailable behavior, quota/auth/provider failure handling, and recovery without corrupting canonical state.
 
-Exit criteria:
+### Windows alpha packaging and acceptance
 
-- the user interacts only with B.O.B.;
-- B.O.B. can reason over current work through the first inference adapter;
-- adapter failure cannot corrupt canonical state;
-- model/runtime output cannot silently mutate application data;
-- metered fallback is impossible unless deliberately enabled by policy.
+Produce the resolved Windows 11 x64 package and the required local/manual evidence for Today, Inbox, Chat, accessibility, restart/recovery, credential handling, and runtime failure behavior.
 
-## Phase 4: additional LLM/runtime adapters
+## Deferred expansion slices
 
-Scope:
+After first-alpha acceptance, later tracer slices may add:
 
-- add the Codex/OpenAI-backed adapter against its supported programmatic surface;
-- normalize capability reporting without pretending backend capabilities are identical;
-- preserve B.O.B. identity and continuity while changing inference backend;
-- validate cancellation and failure behavior;
-- keep runtime/provider selection secondary to the user experience.
+- a second inference/runtime adapter while preserving B.O.B. identity and canonical state;
+- subscription-backed Claude/Codex or other supported runtime paths;
+- optional local inference;
+- bounded Delegate/tool authority;
+- additional desktop platforms when justified.
 
-Exit criteria:
-
-- one B.O.B. workspace can use at least two inference backends without duplicating task state or creating separate agent identities;
-- backend selection is understandable when exposed but does not become the main interaction model.
-
-## Phase 5: bounded delegation and tools
-
-Scope:
-
-- explicit Assist vs Delegate authority modes for B.O.B.;
-- bounded workspace grant;
-- tool/capability disclosure;
-- execution lifecycle and cancellation where supported;
-- result capture and task linkage;
-- audit trail sufficient for user comprehension.
-
-Exit criteria:
-
-- ordinary B.O.B. chat cannot accidentally gain delegated authority;
-- delegated scope is visible before execution;
-- B.O.B. may use an execution-capable runtime or approved tool only inside that grant;
-- completion returns useful state and evidence to B.O.B.
-
-## Phase 6: optional local inference
-
-Scope only after GG-CORE integration requirements are demonstrably mature enough:
-
-- implement the GG-CORE runtime adapter;
-- choose embedded Rust or constrained IPC path;
-- configure model lifecycle without turning B.O.B. into a model-manager product;
-- expose local availability and resource state only where useful;
-- preserve identical B.O.B. state and identity boundaries.
-
-Local inference remains optional.
+These are not first-alpha blockers unless the Wayfinder route is explicitly reopened by the owner.
 
 ## Legacy cleanup policy
 
-Before deleting historical code, identify whether it contains product behavior that is still required by an accepted PRD. Preserve required behavior by rewriting it into the new architecture, not by keeping an incompatible subsystem alive.
+Before deleting historical code, identify whether it contains product behavior that is still required by an accepted PRD or resolved Wayfinder decision. Preserve required behavior by rewriting it into the new architecture, not by keeping an incompatible subsystem alive.
 
 Historical implementation is already preserved in Git history and the named archive branch. Do not recreate an active-tree archive merely to make deletion feel safer.
 
 ## Validation matrix
+
+The final validation commands and packaging evidence are owned by the Wayfinder validation/packaging decision and build-ready specification. At minimum the implementation route must cover:
 
 | Capability | Deterministic tests | Integration tests | Manual UX check |
 | --- | ---: | ---: | ---: |
 | Item lifecycle | Required | Required | Required |
 | Day planning | Required | Required | Required |
 | Persistence/recovery | Required | Required | Required |
-| B.O.B. authority policy | Required | Required | Required |
-| Inference adapter invocation | Required where mockable | Required | Required |
-| Backend-switch continuity | Required where practical | Required | Required |
-| Delegation/tool authority | Required | Required | Required |
+| B.O.B. proposal/authority policy | Required | Required | Required |
+| Gemini adapter invocation | Required where mockable | Required | Required |
+| Inference-unavailable behavior | Required | Required | Required |
+| Credential redaction/storage boundary | Required where testable | Required | Required |
 | Accessibility | Partial automation | N/A | Required |
-| Packaging | N/A | Required | Required |
+| Windows packaging | N/A | Required | Required |
 
-These checks are primarily the responsibility of the implementing developer or coding agent. Repository CI may remain deliberately small and should not be expanded merely to duplicate validation that is already required before review.
+These checks are primarily the responsibility of the implementing developer or coding agent. Repository CI may remain deliberately small and should not be expanded merely to duplicate validation already required before review.
 
 ## Scope discipline
 
-Do not parallelize features merely because old code contains them. The release path is Today + Inbox + continuity + B.O.B. agent core + inference adapters. Knowledge centers, generalized RAG, analytics dashboards, agent swarms, plugin ecosystems, cloud sync, cognitive profiling, and unrelated experimental modules remain out of scope until an accepted PRD changes that boundary.
+Do not parallelize features merely because old code contains them. The first-alpha release path is the resolved Wayfinder destination. Knowledge centers, generalized RAG, analytics dashboards, agent swarms, plugin ecosystems, cloud sync, cognitive profiling, Delegate/tool execution, additional inference backends, and unrelated experimental modules remain outside the first alpha unless an explicit owner decision changes that boundary.
