@@ -1,34 +1,42 @@
 # Product Definition
 
-**Status:** Proposed revival baseline  
+**Status:** Accepted  
 **Product:** B.O.B. | Better Organized Brain
 
 ## Product statement
 
-B.O.B. is a vendor-neutral personal AI workbench that brings multiple supported AI agent surfaces into one consistent workspace while keeping the user's tasks, plans, preferences, and continuity independent of any single model vendor.
+B.O.B. is a local-first personal AI workbench with **one user-facing agent identity: B.O.B.** Behind that single point of contact, B.O.B. can use multiple LLMs, inference runtimes, and tools while keeping the user's tasks, plans, preferences, and continuity independent of any one vendor or model.
 
 B.O.B. adds value in two places that vendor applications do not share:
 
-1. a common personal control plane across agent providers;
+1. a unified B.O.B. agent that can draw on different intelligence and execution backends without fragmenting the user experience;
 2. an ADHD-friendly executive-function interface designed around low-friction capture, realistic planning, reduced cognitive load, and one useful next action.
 
 The governing principle is:
 
-> **B.O.B. owns the work. Agents provide the intelligence.**
+> **B.O.B. is the agent. Models, runtimes, and tools are capabilities.**
 
 ## Problem
 
-AI vendors provide increasingly capable chat and agent applications, but each vendor owns a separate session model, interface, cost structure, and work surface. A user who prefers different agents for different tasks must repeatedly switch applications, rebuild context, reconcile outputs, and independently maintain tasks or plans.
+AI vendors provide increasingly capable chat, coding, and agentic applications, but each vendor owns a separate session model, interface, cost structure, and execution surface. Requiring the user to manage those same distinctions inside B.O.B. would simply reproduce the complexity the product exists to remove.
 
-Generic productivity software solves task storage but does not provide a common AI interaction layer. Generic AI chat solves reasoning but does not provide durable personal planning and executive-function structure.
+Generic productivity software stores tasks but lacks an intelligent interaction layer. Generic AI chat reasons well but does not provide durable personal planning and executive-function structure.
 
-B.O.B. occupies the layer between them.
+B.O.B. occupies the layer between them while presenting only one coherent assistant to the user.
+
+## Product invariant
+
+The user talks to **B.O.B.**
+
+B.O.B. may use Claude-backed inference, Codex-backed inference, local models, future LLMs, or approved tools. Those systems are internal capabilities, not peer user-facing agents.
+
+Provider/runtime identity may be visible when it matters for cost, privacy, capability, troubleshooting, or explicit user choice, but it must not become the primary interaction model.
 
 ## Target user experience
 
-A user opens one application and sees what matters today, not an empty prompt.
+A user opens one application and sees what matters today, not an empty prompt and not a roster of AI providers.
 
-They can capture a thought without deciding its final category, ask B.O.B. to organize it, plan a realistic day, replan after disruption, or delegate a bounded task to a preferred agent. They can switch from Claude Code to Codex or local inference without moving their canonical tasks and planning state.
+They can capture a thought without deciding its final category, ask B.O.B. to organize it, plan a realistic day, replan after disruption, or ask B.O.B. to perform bounded external work. B.O.B. can change the underlying model/runtime without moving canonical tasks or forcing the user into a different conversational identity.
 
 The user should be able to ask:
 
@@ -39,8 +47,11 @@ The user should be able to ask:
 - I am overwhelmed. Show me one thing.
 - Turn this brain dump into tasks.
 - Move unfinished work to tomorrow.
-- Give this coding task to Codex.
+- Use Codex for this coding work.
 - Use Claude for this writing task.
+- Keep this local.
+
+The last three are optional backend preferences, not separate agents the user must manage.
 
 ## Product surfaces
 
@@ -60,19 +71,11 @@ Today is the default surface. It contains:
 
 Inbox is the single capture queue for unprocessed material. Items may be tasks, ideas, notes, reminders, or undetermined brain dumps. Categorization can happen later.
 
-Inbox supports:
-
-- instant text capture;
-- optional natural-language interpretation;
-- convert to task, idea, note, or reminder;
-- plan, defer, archive, or delete;
-- batch organization with a preview before changes are applied.
-
 ### B.O.B. Chat
 
-Chat is a conversational control surface over B.O.B. state and agent bridges. It is not the canonical store itself.
+Chat is the conversational surface for the B.O.B. agent. It is not a vendor-session selector and is not the canonical store itself.
 
-Chat can:
+B.O.B. Chat can:
 
 - explain the current plan;
 - organize captured material;
@@ -80,13 +83,14 @@ Chat can:
 - break work into smaller steps;
 - answer questions using bounded B.O.B. context;
 - propose state changes;
-- delegate bounded external work when the user explicitly requests it.
+- honor explicit inference preferences when relevant;
+- perform bounded external work when the user intentionally delegates authority to B.O.B.
 
 ### Settings
 
 Settings owns:
 
-- agent bridge availability and defaults;
+- inference/runtime availability and defaults;
 - subscription and cost policy;
 - local inference configuration;
 - accessibility and visual preferences;
@@ -110,29 +114,29 @@ Required patterns include:
 - visible distinction between suggestion and committed state;
 - accessible typography, contrast, reduced motion, and keyboard operation.
 
-## AI role
+## AI and inference role
 
-AI is a reasoning and transformation capability, not the application backbone.
+Inference is a capability of B.O.B., not the application backbone and not the user-facing identity.
 
-Without an available agent, B.O.B. must still support capture, task state, manual planning, scheduling, completion, deferral, and local persistence.
+Without an available LLM/runtime, B.O.B. must still support capture, task state, manual planning, scheduling, completion, deferral, and local persistence.
 
-Agent output may inform or propose application changes, but application state changes are executed by B.O.B. after validation and according to the user's authority settings.
+Model output may inform or propose application changes, but application state changes are executed by B.O.B. after validation and according to the user's authority settings.
 
-## Agent modes
+## Authority modes
 
 ### Assist
 
-The agent reasons, summarizes, organizes, and proposes. B.O.B. owns all state mutations and external authority.
+B.O.B. reasons, summarizes, organizes, transforms, and proposes using an allowed inference runtime. Assist does not implicitly grant filesystem, shell, repository, or external-workspace authority.
 
 ### Delegate
 
-The user explicitly grants an agent a bounded workspace and capability set for a defined task. Delegate mode is not implied by ordinary chat.
+The user explicitly grants **B.O.B.** bounded authority for a defined task. B.O.B. may then use an execution-capable runtime or approved tool inside that grant. The user is not delegating to a separate peer agent.
 
 ## Cost model
 
 The default policy is:
 
-1. subscription-backed agent integrations;
+1. subscription-backed inference/runtime integrations;
 2. local inference;
 3. metered API inference only when explicitly enabled.
 
@@ -145,28 +149,30 @@ B.O.B. owns:
 - tasks and inbox items;
 - day plans and schedule blocks;
 - user preferences;
-- provider and cost-policy configuration;
-- compact working continuity needed to move between agents;
+- runtime and cost-policy configuration;
+- compact working continuity;
+- B.O.B. conversation continuity;
 - action and delegation history required for understandable behavior.
 
-Vendor conversation history may be referenced as an integration detail but is not the canonical state of the product.
+Vendor/runtime session state may be referenced as an implementation detail but is not the canonical product state.
 
 ## Explicit non-goals
 
 The revival does not initially include:
 
+- a visible multi-agent swarm, agent roster, or peer-agent orchestration model;
 - cognitive trait profiling;
 - diagnosis, treatment, or mental-health assessment;
-- autonomous background agents making open-ended changes;
+- ambient autonomous execution making open-ended changes;
 - vector databases or general RAG knowledge centers;
 - document-management platforms;
 - cloud sync or multi-user collaboration;
-- automatic provider routing based on opaque model scoring;
+- opaque automatic model scoring as a required first-release feature;
 - general plugin marketplaces;
-- vendor-specific clones of ChatGPT, Claude, or Cowork;
+- vendor-specific clones of ChatGPT, Claude, or Codex;
 - silent metered API fallback;
 - gamified productivity scoring or shame-oriented analytics.
 
 ## Product success criteria
 
-The first revived release is successful when a user can reliably capture work, plan a day, recover from interruption, converse with at least one subscription-backed agent through B.O.B., switch agent bridges without losing canonical state, and understand what B.O.B. will do before it changes important state or incurs metered cost.
+The first revived release is successful when a user can reliably capture work, plan a day, recover from interruption, converse with B.O.B. through at least one subscription-backed inference runtime, use a second runtime without losing B.O.B.'s identity or canonical state, and understand what B.O.B. will do before it changes important state or incurs metered cost.
