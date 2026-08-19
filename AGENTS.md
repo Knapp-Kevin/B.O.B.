@@ -1,56 +1,83 @@
 # AGENTS.md
 
-Repository instructions for automated coding agents and agent-assisted development.
+Binding repository instructions for coding agents and agent-assisted development.
 
 ## Mission
 
 Build B.O.B. as a small, vendor-neutral personal AI workbench with ADHD-friendly interaction design.
 
-The governing product principle is:
-
 > **B.O.B. owns the work. Agents provide the intelligence.**
 
-## Before changing code
+## Read before changing anything
 
 Read, in order:
 
 1. `README.md`
-2. `GOVERNANCE.md`
+2. `docs/governance/GOVERNANCE.md`
 3. `docs/PRODUCT.md`
 4. `docs/ARCHITECTURE.md`
-5. relevant PRDs, RFCs, ADRs, and implementation plans
+5. `docs/DESIGN.md` when user-facing behavior is involved
+6. the governing PRD, RFC, ADR, and implementation-plan sections for the change
 
-Do not infer current architecture from legacy Electron/Ollama code when an accepted decision record says otherwise.
+The active tree is authoritative. Historical implementation is preserved on `archive/pre-revival-cleanup-2026-08-19` and must not be treated as current architecture unless a governing record explicitly brings a concept forward.
 
 ## Non-negotiable boundaries
 
-- B.O.B. owns canonical task, plan, preference, and continuity state.
-- Agent bridges do not own application state.
-- Metered inference is opt-in and must never be an invisible fallback.
-- Core planning and task functionality must remain usable without AI.
-- Agent execution authority must be bounded and explicit.
-- Do not add cognitive profiling, diagnostic scoring, or inferred neurodivergence traits.
-- Do not introduce a framework, service, database, daemon, or dependency unless the accepted architecture requires it.
-- Prefer the smallest implementation that satisfies the accepted requirement.
-- Preserve accessibility and low-cognitive-load behavior as product requirements, not cosmetic polish.
+- B.O.B. owns canonical task, plan, preference, continuity, and application state.
+- Agent bridges do not become systems of record.
+- Core capture, task, and planning behavior remains useful without AI.
+- Subscription-backed inference is preferred; local inference is permitted; metered inference requires explicit user enablement.
+- Unknown provider cost classification fails closed.
+- Normal Assist mode does not grant shell, filesystem, credential, or arbitrary application authority.
+- Delegate mode requires explicit scope, workspace, capabilities, and visible cost class.
+- Agent output is untrusted until B.O.B. validates proposed application actions.
+- Do not add cognitive profiling, diagnostic scoring, inferred neurodivergence traits, guilt mechanics, or productivity scoring disguised as wellbeing support.
+- Accessibility and low cognitive load are product requirements, not post-launch polish.
+- Do not add a service, daemon, database, framework, runtime, or dependency without a current requirement and documented architectural reason.
+- Prefer deletion and a narrow typed boundary over parallel implementations.
 
-## Change discipline
+## Change classification
 
-Before implementation, classify the work under `GOVERNANCE.md` and create or update the required PRD, RFC, or ADR.
+Use the smallest record set that makes the change traceable:
 
-Do not modify accepted decision records to make an implementation appear compliant after the fact. Propose a superseding record instead.
+| Change | Record |
+| --- | --- |
+| Material user capability or behavior | PRD |
+| Significant implementation mechanism, protocol, integration, or migration | RFC |
+| Durable architectural decision | ADR |
+| Routine bug, test, copy, or dependency maintenance | PR only |
 
-## Code quality
+A record marked `Proposed` is not permission to pretend an unresolved decision is settled. If implementation depends on it, resolve the decision in the governing review first.
 
-- Keep modules narrow and explicit.
-- Prefer typed boundaries between UI, application core, persistence, and agent bridges.
-- Validate all agent-proposed actions before execution.
-- Do not expose secrets to renderer code or logs.
-- Add tests for deterministic logic and authority boundaries.
-- Update documentation in the same change when behavior changes.
+## Engineering discipline
+
+- Keep UI, application core, persistence, policy, and agent bridges separated by explicit boundaries.
+- Prefer typed data contracts at every trust boundary.
+- Keep deterministic planning logic deterministic and directly tested.
+- Never put secrets in renderer state, logs, prompts, screenshots, fixtures, or ordinary application data.
+- Make destructive state changes recoverable where practical.
+- Treat provider CLIs and external agents as external processes with failure, version, auth, cancellation, and output-validation concerns.
+- Do not silently widen workspace or filesystem permissions.
+- Do not silently change provider or cost class.
+- Update documentation in the same change that makes a documented statement true or false.
+
+## Repository hygiene
+
+The repository root is intentionally sparse. Do not place implementation experiments, generated inventories, model artifacts, temporary scripts, screenshots, research dumps, or historical copies in the root.
+
+Expected root entries are limited to core repository surfaces such as `README.md`, `AGENTS.md`, `.gitignore`, `.github/`, `docs/`, and the eventual active application directories/configuration required to build the revived product.
+
+Git history and the named archive branch are the archive. Do not recreate a museum in `master`.
 
 ## Pull requests
 
-A pull request must describe scope, governing records, behavior change, validation, security/cost impact, and documentation impact.
+A material pull request must state:
 
-No AI attribution, agent markers, or generated-by footers are required in repository artifacts.
+- user problem and intended outcome;
+- scope and explicit non-goals;
+- governing PRD/RFC/ADR references;
+- architecture, data, authority, security, and inference-cost impact;
+- validation performed and evidence obtained;
+- documentation changed with the behavior.
+
+No AI attribution, generated-by footer, Co-Authored-By marker, or agent branding is required in repository artifacts.
