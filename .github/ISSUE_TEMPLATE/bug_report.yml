@@ -3,6 +3,12 @@ description: Report incorrect B.O.B. behavior
 title: "[Bug]: "
 labels: []
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve B.O.B.
+
+        **Do not include credentials, API keys, tokens, private files, personal data, or vulnerability details here.** Security issues belong through the private path described in the Security policy.
   - type: textarea
     id: observed
     attributes:
@@ -21,7 +27,7 @@ body:
     id: reproduce
     attributes:
       label: Reproduction
-      description: Provide the smallest reliable sequence.
+      description: Provide the smallest reliable sequence. Use synthetic/example data rather than private content.
     validations:
       required: true
   - type: dropdown
@@ -36,7 +42,7 @@ body:
         - Persistence / data
         - Settings / accessibility
         - Build / packaging
-        - Legacy code
+        - Documentation
         - Other
     validations:
       required: true
@@ -48,9 +54,10 @@ body:
         - label: Data loss or corruption may be involved.
         - label: Unexpected metered inference may be involved.
         - label: Agent authority exceeded the expected boundary.
-        - label: Credentials or sensitive data may be exposed.
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: OS, B.O.B. version/commit, configured bridge, and other relevant details.
+      description: OS, B.O.B. version/commit, configured bridge, and other relevant non-sensitive details.
+    validations:
+      required: true
