@@ -1,6 +1,7 @@
 export type Route = "today" | "inbox" | "chat" | "settings";
 export type ItemKind = "task" | "idea" | "note" | "reminder";
 export type ItemStatus = "inbox" | "planned" | "doing" | "done" | "deferred";
+export type SetupStep = 1 | 2 | 3;
 
 export interface WorkItem {
   id: string;
@@ -17,6 +18,18 @@ export interface ChatMessage {
   text: string;
 }
 
+export interface StateChangeProposal {
+  title: string;
+  summary: string;
+  targetId: string;
+}
+
+export interface HandoffSnapshot {
+  objective: string;
+  state: string;
+  next: string;
+}
+
 export interface AppState {
   route: Route;
   reduced: boolean;
@@ -25,10 +38,13 @@ export interface AppState {
   items: WorkItem[];
   chat: ChatMessage[];
   setupOpen: boolean;
+  setupStep: SetupStep;
   geminiStaged: boolean;
   largerText: boolean;
   reducedMotion: boolean;
   toast: string;
+  pendingProposal?: StateChangeProposal;
+  handoff?: HandoffSnapshot;
 }
 
 const seedItems: WorkItem[] = [
@@ -50,18 +66,25 @@ export const state: AppState = {
   items: seedItems,
   chat: [{ author: "bob", text: "Give me the messy version. I’ll help you find the next useful move." }],
   setupOpen: false,
+  setupStep: 1,
   geminiStaged: false,
   largerText: false,
   reducedMotion: false,
   toast: ""
 };
 
-export const activeItem = () => state.items.find((item) => item.id === state.activeId) ?? state.items[0]!;
+export const activeItem = () => state.items.find((item) => item.id === state.activeId) ?? state.items.find((item) => item.status === "planned") ?? state.items[0]!;
 export const focusItems = () => ["outline", "client", "workout"].map((id) => state.items.find((item) => item.id === id)).filter((item): item is WorkItem => Boolean(item));
-export const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]!);
+export const escapeHtml = (value: string) => value.replace(/[&<>'\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '\"': "&quot;" })[character]!);
+
+let toastTimer: number | undefined;
 export const showToast = (message: string) => {
   state.toast = message;
-  window.setTimeout(() => {
-    if (state.toast === message) state.toast = "";
+  if (toastTimer) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    if (state.toast === message) {
+      state.toast = "";
+      window.dispatchEvent(new Event("bob:render"));
+    }
   }, 2400);
 };
