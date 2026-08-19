@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">B.O.B. - Better Organized Brain</title>
+  <desc id="desc">A friendly blue and orange robot mascot beside the Better Organized Brain name and personal AI workbench tagline.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#08152d"/>
+      <stop offset="1" stop-color="#123c67"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#24c8ff"/>
+      <stop offset="1" stop-color="#ff9f2f"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="420" rx="34" fill="url(#bg)"/>
+  <path d="M0 350 C230 300 390 405 610 350 S980 305 1200 350 V420 H0Z" fill="#061124" opacity=".72"/>
+  <circle cx="1050" cy="70" r="120" fill="#24c8ff" opacity=".05"/>
+  <circle cx="1080" cy="120" r="75" fill="#ff9f2f" opacity=".05"/>
+
+  <g transform="translate(105 55)">
+    <line x1="150" y1="42" x2="150" y2="10" stroke="#dceeff" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="150" cy="8" r="13" fill="#ff9f2f" filter="url(#glow)"/>
+
+    <rect x="18" y="45" width="264" height="190" rx="72" fill="#edf5ff" stroke="#8ebfe6" stroke-width="8"/>
+    <rect x="48" y="72" width="204" height="128" rx="46" fill="#061224" stroke="#24c8ff" stroke-width="5"/>
+    <circle cx="88" cy="136" r="10" fill="#24c8ff" filter="url(#glow)"/>
+    <circle cx="212" cy="136" r="10" fill="#24c8ff" filter="url(#glow)"/>
+    <path d="M116 158 Q150 185 184 158" fill="none" stroke="#24c8ff" stroke-width="9" stroke-linecap="round"/>
+    <rect x="4" y="110" width="26" height="70" rx="13" fill="#ff9f2f"/>
+    <rect x="270" y="110" width="26" height="70" rx="13" fill="#24c8ff"/>
+
+    <rect x="70" y="232" width="160" height="105" rx="46" fill="#eaf4ff" stroke="#8ebfe6" stroke-width="8"/>
+    <circle cx="150" cy="278" r="33" fill="#07162d" stroke="url(#accent)" stroke-width="6"/>
+    <path d="M137 258c-16 3-18 24-5 30-10 9-2 25 12 22m19-52c16 3 18 24 5 30 10 9 2 25-12 22M150 250v62" fill="none" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
+    <text x="150" y="330" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" font-weight="800" fill="#0b3155">B.O.B.</text>
+  </g>
+
+  <g transform="translate(455 92)" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+    <text x="0" y="70" font-size="82" font-weight="900" letter-spacing="5" fill="#ffffff">B.O.B.</text>
+    <rect x="2" y="88" width="525" height="7" rx="4" fill="url(#accent)"/>
+    <text x="0" y="140" font-size="34" font-weight="650" fill="#dceeff">Better Organized Brain</text>
+    <text x="0" y="195" font-size="24" fill="#a9c7e5">Your personal AI workbench for tasks, planning,</text>
+    <text x="0" y="229" font-size="24" fill="#a9c7e5">continuity, and the right agent for the job.</text>
+    <text x="0" y="286" font-size="22" font-weight="700" fill="#24c8ff">B.O.B. owns the work.</text>
+    <text x="224" y="286" font-size="22" font-weight="700" fill="#ffb04c">Agents provide the intelligence.</text>
+  </g>
+</svg>
