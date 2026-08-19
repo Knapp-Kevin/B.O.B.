@@ -2,39 +2,49 @@
 
 ## Security posture
 
-B.O.B. is a local-first desktop application that coordinates local state with optional external or local AI agents. Its primary security goal is to keep authority explicit: the UI, application core, canonical data, credentials, agent processes, and delegated workspaces must not collapse into one ambient trust domain.
+B.O.B. is a local-first desktop application with one user-facing agent identity and optional external or local inference runtimes and tools behind it. Its primary security goal is to keep authority explicit: the UI, B.O.B. agent core, canonical data, credentials, inference processes, tools, and delegated workspaces must not collapse into one ambient trust domain.
 
 ## Trust model
 
 ```mermaid
 flowchart LR
     UI[WebView UI] -->|typed commands| CORE[Rust application core]
+    CORE --> BOB[B.O.B. agent core]
     CORE --> POLICY[Authority + cost policy]
     CORE --> STATE[(Canonical local state)]
     CORE --> CREDS[Protected credential references]
-    CORE --> BRIDGE[Agent bridge]
-    BRIDGE --> AGENT[External or local agent]
-    AGENT -->|untrusted result / proposal| BRIDGE
-    BRIDGE --> CORE
+
+    BOB --> ROUTER[Inference + tool router]
+    ROUTER --> RUNTIME[External/local runtime]
+    ROUTER --> TOOLS[Approved tools]
+
+    RUNTIME -->|untrusted result| ROUTER
+    TOOLS -->|result + evidence| ROUTER
+    ROUTER --> BOB
+    BOB -->|validated proposals| CORE
     POLICY -->|validate before mutation| STATE
 
     UI -. no direct secrets .-> CREDS
-    AGENT -. no direct canonical writes .-> STATE
+    RUNTIME -. no direct canonical writes .-> STATE
+    TOOLS -. no direct canonical writes .-> STATE
 ```
+
+The user delegates to B.O.B., not to a visible collection of peer agents. Models and runtimes are inference capabilities. Tools and execution surfaces receive only the authority B.O.B. is explicitly allowed to exercise for the task.
 
 ## Required controls
 
-- Renderer/UI code must not receive unrestricted native, filesystem, shell, or credential authority.
+- Frontend/UI code must not receive unrestricted native, filesystem, shell, or credential authority.
 - Secrets must use platform-appropriate protected storage where available and must never be written to ordinary logs, prompts, fixtures, screenshots, or canonical task data.
-- Agent bridges receive only the context needed for the request.
-- Agent output is untrusted input until B.O.B. validates proposed application actions.
-- Normal Assist mode must not implicitly grant filesystem or shell execution.
-- Delegate mode must identify the bounded workspace, granted capabilities, provider, and cost class before execution.
-- Provider changes must not silently widen authority.
+- Runtime adapters receive only the context needed for the request.
+- Model/runtime and tool output is untrusted input until B.O.B. validates proposed application actions.
+- Normal Assist mode must not implicitly grant filesystem, shell, repository, or external-workspace execution.
+- Delegate mode must identify the bounded workspace, granted capabilities/tools, runtime or provider where relevant, and cost class before execution.
+- Runtime/provider changes must not silently widen authority.
 - Metered inference is disabled unless explicitly enabled by the user.
 - Unknown provider billing classification fails closed.
 - Canonical user state must remain exportable and recoverable without a model vendor.
 - External-process failures, cancellation, malformed output, and version drift must fail safely rather than corrupt canonical state.
+- Multiple inference runtimes must not create multiple canonical B.O.B. identities or independent systems of record.
 
 ## Dependency and supply-chain posture
 
