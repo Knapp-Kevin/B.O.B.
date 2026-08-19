@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default B.O.B. desktop capability set. No privileged plugins are enabled in pre-alpha.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
