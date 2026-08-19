@@ -42,10 +42,26 @@ The revived application starts from a clean dependency graph rather than inherit
 
 Generated model artifacts and downloaded model weights do not belong in Git history unless a specific reviewed distribution decision requires them.
 
-## Vulnerability reporting
+## Reporting a vulnerability
 
-B.O.B. is currently private. Report suspected vulnerabilities privately to the repository owner through an appropriate private channel. Do not open public vulnerability details if the repository becomes public before a disclosure process and contact route are documented.
+**Do not open a public issue for a suspected vulnerability. Do not include credentials, exploit details, private data, or sensitive logs in normal issues or pull requests.**
+
+When this repository becomes public, GitHub Private Vulnerability Reporting is the required reporting path. Use the repository **Security** tab and choose **Report a vulnerability**. Reports submitted there remain private to the reporter and repository maintainers while the issue is investigated.
+
+Before B.O.B. is made public, Private Vulnerability Reporting must be enabled and verified as required by [`docs/PUBLIC_RELEASE.md`](../docs/PUBLIC_RELEASE.md). If the repository is still private and that reporting control is not available, contact the repository owner privately using the contact information available through the owner's GitHub profile.
+
+A useful report includes the affected version or commit, impact, reproduction steps, relevant configuration, and a minimal proof of concept when appropriate. Please redact secrets and unrelated personal information.
+
+Maintainers will acknowledge and investigate reports in good faith, but no formal response-time SLA applies until a supported public release defines one.
+
+## Disclosure
+
+Please allow maintainers a reasonable opportunity to investigate and remediate a vulnerability before public disclosure. Coordinated disclosure details, affected versions, and credits can be agreed through the private advisory when applicable.
 
 ## Supported versions
 
-The revived implementation has not yet reached a supported release. Supported-version and disclosure-response commitments will be defined before the first public release candidate.
+The revived implementation has not yet reached a supported release. Supported-version and security-response commitments will be defined before the first public release candidate.
+
+## Public-history gate
+
+Security review before publication includes Git history, branches, tags, release assets, workflow artifacts, third-party binaries, and commit metadata, not only the current source tree. The repository must pass the full publication gate before visibility changes.
