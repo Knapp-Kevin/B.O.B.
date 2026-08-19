@@ -19,6 +19,8 @@ A local-first, ADHD-friendly personal AI workbench that keeps tasks, plans, cont
 
 </div>
 
+![B.O.B. - Better Organized Brain](docs/assets/bob-readme-hero.png)
+
 > [!IMPORTANT]
 > **Current status:** B.O.B. is in pre-alpha revival. The product and architecture baseline is established, but the revived application is not yet runnable from `master`. The retired Electron/Ollama prototype is not part of the active implementation.
 
