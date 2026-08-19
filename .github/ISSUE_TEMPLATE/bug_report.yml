@@ -1,0 +1,56 @@
+name: Bug report
+description: Report incorrect B.O.B. behavior
+title: "[Bug]: "
+labels: []
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reliable sequence.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Today / planning
+        - Inbox / capture
+        - Chat / agent bridge
+        - Delegation / authority
+        - Persistence / data
+        - Settings / accessibility
+        - Build / packaging
+        - Legacy code
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: risk
+    attributes:
+      label: Risk indicators
+      options:
+        - label: Data loss or corruption may be involved.
+        - label: Unexpected metered inference may be involved.
+        - label: Agent authority exceeded the expected boundary.
+        - label: Credentials or sensitive data may be exposed.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, B.O.B. version/commit, configured bridge, and other relevant details.
