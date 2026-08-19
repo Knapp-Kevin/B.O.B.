@@ -61,11 +61,19 @@ A record marked `Proposed` is not permission to pretend an unresolved decision i
 - Do not silently change provider or cost class.
 - Update documentation in the same change that makes a documented statement true or false.
 
+## Validation responsibility
+
+GitHub Actions and required CI gates are intentionally minimal for this small project. The implementing developer or coding agent owns validation before requesting review.
+
+Run the checks that are relevant to the change, such as builds, unit tests, linting, type checks, targeted integration tests, and manual UI validation. Do not invent checks merely to fill a template. A pull request must state exactly what was run, what passed, what was not run, and why.
+
+Repository CI is a safety net when present, not a substitute for implementation-time validation.
+
 ## Repository hygiene
 
 The repository root is intentionally sparse. Do not place implementation experiments, generated inventories, model artifacts, temporary scripts, screenshots, research dumps, or historical copies in the root.
 
-Expected root entries are limited to core repository surfaces such as `README.md`, `AGENTS.md`, `.gitignore`, `.github/`, `docs/`, and the eventual active application directories/configuration required to build the revived product.
+Expected root entries are limited to core repository surfaces such as `README.md`, `AGENTS.md`, `LICENSE`, `.gitignore`, `.github/`, `docs/`, and the eventual active application directories/configuration required to build the revived product.
 
 Git history and the named archive branch are the archive. Do not recreate a museum in `master`.
 
