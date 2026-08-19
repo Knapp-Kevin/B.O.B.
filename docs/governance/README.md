@@ -4,12 +4,14 @@ B.O.B. governance is intentionally lightweight but explicit. Its purpose is to p
 
 ## Documents
 
-- [`DECISION_PROCESS.md`](DECISION_PROCESS.md): how PRDs, RFCs, and ADRs are proposed, accepted, rejected, or superseded
+- [`GOVERNANCE.md`](GOVERNANCE.md): governing summary, authority, review questions, and hard rules
+- [`DECISION_PROCESS.md`](DECISION_PROCESS.md): how PRDs, RFCs, ADRs, and Wayfinder convergence interact
+- [`WAYFINDER.md`](WAYFINDER.md): governed design-resolution process from decision fog to build-ready implementation
 - [`SCOPE_GUARDRAILS.md`](SCOPE_GUARDRAILS.md): what belongs in B.O.B. and what requires exceptional justification
 - [`AI_COST_AND_PROVIDER_POLICY.md`](AI_COST_AND_PROVIDER_POLICY.md): billing classification, provider fallback, and user-consent rules
 - [`DOCUMENTATION_STANDARD.md`](DOCUMENTATION_STANDARD.md): documentation quality and traceability requirements
 
-Root [`GOVERNANCE.md`](../../GOVERNANCE.md) is the governing summary.
+Repository-level agent instructions are in [`../../AGENTS.md`](../../AGENTS.md).
 
 ## Principle
 

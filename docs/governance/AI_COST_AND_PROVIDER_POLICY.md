@@ -6,10 +6,11 @@ Make B.O.B. safe for sustained personal use without surprise usage charges or hi
 
 ## Billing classes
 
-Every agent bridge must expose a billing class before invocation:
+Every inference/runtime adapter must expose a billing class before invocation:
 
 | Class | Meaning | Default policy |
 | --- | --- | --- |
+| `free` | Provider-supported use is available without direct metered billing for the configured path, subject to provider quota/terms | Allowed when configured |
 | `subscription` | Invocation is expected to consume an included vendor subscription allowance rather than direct per-token API billing | Allowed when configured |
 | `local` | Inference runs on user-controlled local compute without vendor inference fees | Allowed when configured |
 | `metered` | Invocation may generate separately billed usage | Disabled by default |
@@ -17,32 +18,35 @@ Every agent bridge must expose a billing class before invocation:
 
 OAuth, API keys, CLI login, and browser login are authentication mechanisms. They do not determine billing class by themselves.
 
+A `free` classification is not a promise of permanent availability. Provider quota, eligibility, data-use terms, and product policy must be verified for the supported integration surface and surfaced where materially relevant.
+
 ## Default ordering
 
-```mermaid
-flowchart LR
-    REQ[AI request] --> SUB{Subscription bridge available?}
-    SUB -- yes --> USESUB[Use selected subscription bridge]
-    SUB -- no --> LOCAL{Enabled local bridge available?}
-    LOCAL -- yes --> USELOCAL[Use local bridge]
-    LOCAL -- no --> METER{Metered explicitly enabled?}
-    METER -- yes --> CONFIRM[Use configured metered policy]
-    METER -- no --> STOP[Do not infer; show alternatives]
-```
+The active product boundary decides which configured adapters exist. Within that boundary, B.O.B. should prefer the least surprising allowed path rather than preserving a historical provider ordering for its own sake.
 
-The user may choose a specific allowed bridge rather than following this preference order.
+General default preference:
+
+1. an explicit user-selected allowed adapter;
+2. an enabled `free` path appropriate to the requested capability;
+3. an enabled already-included `subscription` path;
+4. an enabled `local` path;
+5. an explicitly enabled `metered` path;
+6. otherwise continue without inference and explain the available next step.
+
+For the first runnable alpha, the resolved Wayfinder route selects **Gemini Developer API Free** as the sole required inference backend. Subscription-backed and local adapters are later expansion paths, not alpha prerequisites.
 
 ## No silent fallback
 
-A bridge failure, authentication failure, rate limit, subscription allowance exhaustion, or provider outage must not silently cause metered API traffic.
+A provider failure, authentication failure, rate limit, free-quota exhaustion, subscription allowance exhaustion, local-runtime failure, or provider outage must not silently cause metered API traffic.
 
 Valid outcomes include:
 
-- use another enabled subscription bridge;
-- use an enabled local bridge;
-- wait for allowance/reset;
-- continue without AI;
+- continue without AI while deterministic B.O.B. planning remains available;
+- use another enabled non-metered path only when the active product boundary and user policy permit it;
+- wait for allowance or quota reset;
 - explicitly enable a metered provider.
+
+Backend changes that materially affect privacy, billing, or user intent must not occur silently.
 
 ## Metered enablement
 
@@ -50,11 +54,11 @@ Metered inference requires an explicit settings action. The UI must identify tha
 
 ## Provider verification
 
-Bridge documentation must identify the supported vendor surface being used and the basis for its billing classification. When vendor terms or product behavior change, the classification must be re-verified before documentation continues to claim subscription-backed use.
+Adapter documentation must identify the supported vendor surface being used and the basis for its billing classification. When vendor terms, quota, eligibility, privacy/data-use policy, or product behavior changes, the classification must be re-verified before documentation continues to claim free, subscription-backed, or otherwise included use.
 
 ## Terms and support boundaries
 
-B.O.B. should integrate supported programmatic or CLI interfaces. Do not rely on reverse-engineered private app protocols, credential scraping, or mechanisms intended to bypass vendor billing or usage controls.
+B.O.B. should integrate supported programmatic, CLI, or runtime interfaces. Do not rely on reverse-engineered private app protocols, credential scraping, or mechanisms intended to bypass vendor billing or usage controls.
 
 ## Local inference
 
@@ -62,4 +66,4 @@ Local inference is considered no-vendor-inference-fee, not zero-cost. Compute, p
 
 ## Logging
 
-Do not log secrets, raw authentication tokens, or unnecessary billing metadata. Operational status should use non-sensitive bridge identifiers and normalized error classes.
+Do not log secrets, raw authentication tokens, API keys, or unnecessary billing metadata. Operational status should use non-sensitive adapter identifiers and normalized error classes.

@@ -10,6 +10,8 @@ The repository owner is the final product and technical authority unless authori
 
 Material changes are reviewed through pull requests. Product intent, implementation proposals, and durable architecture decisions are recorded separately so that code cannot quietly redefine the product after the fact.
 
+When an active Wayfinder map is being used to resolve a bounded product destination, follow [`WAYFINDER.md`](WAYFINDER.md). Explicit owner dispositions in resolved Wayfinder tickets govern that destination when they intentionally supersede older destination-specific assumptions, but the resulting documentation debt must be reconciled before implementation handoff.
+
 ## Decision records
 
 | Record | Answers | Use when |
@@ -41,9 +43,9 @@ B.O.B. is a personal AI workbench with ADHD-friendly interaction design. Scope s
 
 - personal task and planning continuity;
 - low-friction capture and organization;
-- one durable work state across multiple supported agents;
-- explicit agent authority;
-- subscription-first inference cost control;
+- one durable B.O.B. work state across multiple supported capabilities;
+- explicit B.O.B. authority;
+- zero-surprise inference cost control, preferring configured zero-cost or already-included paths appropriate to the active product boundary;
 - local-first canonical state;
 - accessible, low-cognitive-load interaction.
 
@@ -68,11 +70,11 @@ A material change should make these answers obvious:
 
 ### B.O.B. owns canonical work
 
-Agents may reason, generate, and perform explicitly delegated work, but vendor sessions do not become the canonical home for tasks, plans, preferences, or continuity.
+Inference runtimes and tools may reason, generate, and perform explicitly delegated work, but vendor sessions do not become the canonical home for tasks, plans, preferences, or continuity.
 
 ### No silent metered fallback
 
-B.O.B. must never silently switch from subscription-backed or local inference to a metered API. Metered use requires explicit enablement and visible cost-policy state. Unknown billing classification fails closed.
+B.O.B. must never silently switch from a free, already-included, subscription-backed, or local inference path to a metered API. Metered use requires explicit enablement and visible cost-policy state. Unknown billing classification fails closed.
 
 ### Authority is mode-dependent
 
@@ -89,6 +91,7 @@ Git history and named archive branches preserve retired work. `master` must not 
 ## Detailed policies
 
 - [`DECISION_PROCESS.md`](DECISION_PROCESS.md)
+- [`WAYFINDER.md`](WAYFINDER.md)
 - [`SCOPE_GUARDRAILS.md`](SCOPE_GUARDRAILS.md)
 - [`AI_COST_AND_PROVIDER_POLICY.md`](AI_COST_AND_PROVIDER_POLICY.md)
 - [`DOCUMENTATION_STANDARD.md`](DOCUMENTATION_STANDARD.md)
