@@ -29,6 +29,7 @@ flowchart TB
     TRACE --> RFC
     TRACE --> ADR
 
+    PUBLIC[PUBLIC_RELEASE.md<br/>Public repository gate] --> ROOT
     LEGACY[legacy/<br/>Historical context] -. not authoritative .-> ARCH
 ```
 
@@ -41,6 +42,7 @@ flowchart TB
 | Understand Today, Inbox, Chat, accessibility, overwhelm reduction, and interaction rules | [`DESIGN.md`](DESIGN.md) |
 | Understand implementation order and acceptance gates | [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) |
 | Understand release sequencing | [`ROADMAP.md`](ROADMAP.md) |
+| Prepare the repository for public visibility | [`PUBLIC_RELEASE.md`](PUBLIC_RELEASE.md) |
 | Trace requirements to decisions and planned implementation | [`TRACEABILITY.md`](TRACEABILITY.md) |
 | Propose or review user-facing requirements | [`prd/`](prd/) |
 | Propose or review a significant implementation mechanism | [`rfc/`](rfc/) |
@@ -102,6 +104,10 @@ Detailed requirements are in [`governance/DOCUMENTATION_STANDARD.md`](governance
 The revival line is presently **design-complete enough to begin the foundation implementation, but not yet a runnable replacement application**. The active tree intentionally excludes the retired Electron/Ollama implementation so old code cannot masquerade as the current product.
 
 The next implementation boundary is defined in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md): establish the Tauri/Rust foundation and canonical local-state boundary before agent integrations.
+
+## Public visibility status
+
+The repository is intentionally still private. A clean current tree is not sufficient for publication because older Git history and refs remain reachable. The repository must pass [`PUBLIC_RELEASE.md`](PUBLIC_RELEASE.md), including history sanitization, third-party-license review, a committed open-source license, secret/privacy review, and private vulnerability-reporting setup, before visibility changes.
 
 ## Historical material
 
