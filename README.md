@@ -6,34 +6,40 @@
 
 **One personal workspace for Claude, Codex, local models, and the work between them.**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Status: Pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)
+![Design: ADHD-friendly](https://img.shields.io/badge/design-ADHD--friendly-6f42c1)
+![Architecture: Multi-agent](https://img.shields.io/badge/architecture-multi--agent-blue)
+![Data: Local-first](https://img.shields.io/badge/data-local--first-success)
+
 A vendor-neutral, ADHD-friendly AI workbench that owns your tasks, plans, context, and continuity while specialized agents provide the intelligence.
 
 **B.O.B. owns the work. Agents provide the intelligence.**
 
 </div>
 
----
+![B.O.B., the Better Organized Brain personal AI workbench](docs/assets/bob-readme-hero.jpg)
 
 > [!IMPORTANT]
-> **Revival status:** the product and architecture baseline is established, but the revived application is not yet runnable from `master`. The legacy Electron/Ollama prototype has been retired from the active tree. Implementation now proceeds from the accepted product, architecture, PRD, RFC, and ADR set in [`docs/`](docs/).
+> **Current status:** B.O.B. is in pre-alpha revival. The product and architecture baseline is established, but the revived application is not yet runnable from `master`. The retired Electron/Ollama prototype is no longer part of the active tree.
 
 ## Why B.O.B. exists
 
 Claude, ChatGPT, Claude Code, Codex, and other AI systems already have excellent first-party applications. B.O.B. is not trying to build weaker copies of them.
 
-The problem is that each vendor application owns a separate island of context, sessions, workflows, and interface conventions. A person who uses more than one agent has to remember where work lives, restate context, move tasks between tools, monitor different usage limits, and repeatedly decide what to do next.
+The problem is fragmentation. Each vendor application has its own context, sessions, workflows, permissions, and interface conventions. People who use several agents repeatedly move work between tools, restate context, track different usage limits, and decide which surface owns what.
 
-B.O.B. is the layer above those islands.
+B.O.B. is the personal layer above those islands.
 
-It provides one durable personal workspace where:
+It provides one durable workspace where:
 
 - tasks and plans belong to the user, not to a model session;
-- Claude Code, Codex, GG-CORE, and future supported agents can be used through bounded bridges;
-- the same work can move between agents without losing its organizing context;
+- Claude Code, Codex, local inference, and future supported agents can operate through bounded bridges;
+- work can move between agents without losing its organizing context;
 - subscription-backed inference is preferred before metered APIs;
 - local inference can be used when privacy, availability, or cost makes it preferable;
-- AI can help without becoming a prerequisite for basic planning and task management;
-- the interface is intentionally designed to reduce executive-function load rather than expose every feature at once.
+- core capture and planning remain useful without AI;
+- the interface is intentionally designed to reduce executive-function load.
 
 That distinction is the product.
 
@@ -114,12 +120,12 @@ B.O.B. does not attempt to diagnose ADHD, infer cognitive traits, score neurodiv
 Instead, the product applies practical interaction constraints:
 
 - **Capture before organization.** Getting something out of working memory should be cheaper than deciding exactly where it belongs.
-- **One obvious next action.** The interface should answer “what should I do now?” before exposing secondary choices.
-- **Small daily focus.** A day plan should emphasize a few meaningful priorities rather than elevate the entire backlog into an emergency.
+- **One obvious next action.** Answer "what should I do now?" before exposing secondary choices.
+- **Small daily focus.** Emphasize a few meaningful priorities rather than presenting the whole backlog as an emergency.
 - **Cheap replanning.** A disrupted day is normal. Replanning should not feel like failing a plan.
 - **Progressive disclosure.** Detail appears when requested instead of competing for attention by default.
-- **Interruption recovery.** B.O.B. should preserve where the user was and make resumption obvious.
-- **Overwhelm reduction.** A reduced-information mode can temporarily hide nonessential choices and surface one manageable action.
+- **Interruption recovery.** Preserve where the user was and make resumption obvious.
+- **Overwhelm reduction.** A reduced-information mode can hide nonessential choices and surface one manageable action.
 - **Accessible presentation.** Font, contrast, motion, density, keyboard use, and readable hierarchy are product requirements.
 - **No guilt mechanics.** Productivity statistics must never become a behavioral scorecard masquerading as encouragement.
 
@@ -127,7 +133,7 @@ See [`docs/DESIGN.md`](docs/DESIGN.md) and [`docs/prd/PRD-0002-adhd-friendly-dai
 
 ## Agent bridges, not vendor lock-in
 
-B.O.B. integrates agent surfaces through a small capability boundary rather than making any one vendor part of the application core.
+B.O.B. integrates supported agent surfaces through a small capability boundary rather than making any one vendor part of the application core.
 
 ```mermaid
 flowchart TB
@@ -138,9 +144,9 @@ flowchart TB
     ROUTER --> LOCAL[GGCoreBridge]
     ROUTER --> FUTURE[FutureBridge]
 
-    CLAUDE -->|subscription-backed when authenticated through Claude plan| CCLI[Claude Code CLI]
-    CODEX -->|subscription-backed when authenticated through ChatGPT plan| XCLI[Codex CLI / supported programmatic surface]
-    LOCAL -->|local compute| GG[GG-CORE]
+    CLAUDE --> CCLI[Claude Code CLI]
+    CODEX --> XCLI[Codex CLI / supported programmatic surface]
+    LOCAL --> GG[GG-CORE]
 
     CCLI --> CLAUDE
     XCLI --> CODEX
@@ -162,7 +168,7 @@ Direct metered APIs are not the default integration path.
 
 ## Cost is an architectural boundary
 
-B.O.B. is specifically designed to avoid turning routine personal organization into an unpredictable inference bill.
+B.O.B. is designed to avoid turning routine personal organization into an unpredictable inference bill.
 
 ```mermaid
 flowchart TD
@@ -175,8 +181,6 @@ flowchart TD
     M -->|No| STOP[Do not incur metered cost]
 ```
 
-The rule is simple:
-
 > **Subscription first. Local second. Metered only by explicit consent.**
 
 B.O.B. must never silently fail over from an included subscription allowance to per-token API billing. Unknown billing behavior fails closed.
@@ -185,7 +189,7 @@ See [`docs/governance/AI_COST_AND_PROVIDER_POLICY.md`](docs/governance/AI_COST_A
 
 ## Assist and Delegate are different authority levels
 
-A planning conversation and a coding agent should not receive the same permissions merely because both happen to involve an LLM.
+A planning conversation and a coding agent should not receive the same permissions merely because both involve an LLM.
 
 ```mermaid
 flowchart LR
@@ -268,8 +272,6 @@ The detailed trust boundaries, data flows, and component responsibilities live i
 
 ## Current state
 
-The repository is intentionally between generations.
-
 **Established:**
 
 - product definition and scope;
@@ -280,7 +282,7 @@ The repository is intentionally between generations.
 - Assist versus Delegate authority model;
 - PRDs, RFCs, ADRs, governance, security, and implementation sequencing.
 
-**Not yet implemented on the revival line:**
+**Not yet implemented:**
 
 - Tauri application shell;
 - canonical local persistence;
@@ -291,7 +293,7 @@ The repository is intentionally between generations.
 - GG-CORE bridge;
 - packaging and release automation.
 
-This README will not claim those capabilities until they exist and are verified. Documentation is a product interface, not a wishlist with better typography.
+This README will not claim those capabilities until they exist and are verified.
 
 ## Implementation sequence
 
@@ -316,10 +318,11 @@ The active root is deliberately small:
 
 ```text
 B.O.B./
-├── .github/        GitHub workflows, templates, contribution and security policy
-├── docs/           Product, architecture, design, governance and decision records
+├── .github/        GitHub templates, contribution, conduct, support, and security policy
+├── docs/           Product, architecture, design, governance, decision records, and assets
 ├── .gitignore      Repository ignore rules
 ├── AGENTS.md       Binding instructions for coding agents
+├── LICENSE         MIT license
 └── README.md       Product and repository front door
 ```
 
@@ -365,15 +368,11 @@ New scope must justify why B.O.B. should own it instead of letting an existing a
 
 ## Legacy preservation
 
-The original Electron/Ollama-era implementation, experimental AI server, RAG work, Python skeletons, historical version folders, model artifacts, and related npm dependency graph are preserved outside the active tree on:
-
-`archive/pre-revival-cleanup-2026-08-19`
-
-The archive is historical evidence, not a supported release line and not an implementation reference unless a current design document explicitly calls something back in.
+The original Electron/Ollama-era implementation and related experiments are preserved in Git history and on `archive/pre-revival-cleanup-2026-08-19`. That material is historical evidence, not a supported release line or architectural authority.
 
 See [`docs/legacy/README.md`](docs/legacy/README.md).
 
-## Governance and contribution
+## Governance, contribution, and validation
 
 B.O.B. is intentionally small, but small does not mean undocumented.
 
@@ -383,7 +382,9 @@ Material changes are traceable through three record types:
 - **RFC:** how a meaningful implementation or protocol should work;
 - **ADR:** which durable architectural decision governs future work.
 
-Implementation must agree with accepted records. If the decision changes, supersede the record. Do not quietly edit history until the code appears innocent.
+Implementation must agree with accepted records. If the decision changes, supersede the record rather than quietly rewriting history.
+
+GitHub Actions and required CI gates are intentionally minimal. The implementing developer or coding agent is responsible for running relevant builds, tests, linting, type checks, targeted integration checks, and manual validation before requesting review, then recording that evidence in the pull request.
 
 Project governance is documented in [`docs/governance/GOVERNANCE.md`](docs/governance/GOVERNANCE.md). Coding-agent requirements are binding in [`AGENTS.md`](AGENTS.md).
 
@@ -393,11 +394,11 @@ B.O.B. is local-first, not local-only.
 
 Canonical personal state remains local by default. Remote agents receive bounded context intentionally. Credentials do not belong in renderer code, logs, prompts, or ordinary local state. Agent output is untrusted until validated. Filesystem and shell authority require an explicit delegated boundary.
 
-The current security contract is documented in [`.github/SECURITY.md`](.github/SECURITY.md).
+Security reporting and the current security contract are documented in [`.github/SECURITY.md`](.github/SECURITY.md).
 
-## Release and license status
+## License
 
-B.O.B. is currently a private revival project and has not reached a supported revival release. Public distribution, licensing, support guarantees, and compatibility commitments will be defined before a public release candidate.
+B.O.B. is open source under the [MIT License](LICENSE). Use it, learn from it, adapt it, and build something useful.
 
 ---
 

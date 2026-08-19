@@ -1,8 +1,6 @@
 # Contributing to B.O.B.
 
-B.O.B. is in active revival. Contributions should make the product clearer, smaller, safer, and easier to use under real executive-function load.
-
-> **License gate:** external code contributions should not be accepted until the repository contains a committed `LICENSE`. If this repository is public and `LICENSE` is absent, issues and design feedback are welcome, but implementation contributions should wait until the licensing terms are explicit.
+B.O.B. is an MIT-licensed open-source project in active revival. Contributions should make the product clearer, smaller, safer, and easier to use under real executive-function load.
 
 ## Start with the contract
 
@@ -40,6 +38,14 @@ Material pull requests should make the following reviewable without archaeology:
 - **Evidence:** tests, manual validation, screenshots where appropriate, and failure-path verification;
 - **Traceability:** PRD, RFC, ADR, issue, or explicit explanation when none is required.
 
+## Validation and CI
+
+B.O.B. intentionally keeps GitHub Actions and required CI gates minimal. The implementing developer or coding agent owns validation before requesting review.
+
+Run the checks relevant to the change, such as builds, unit tests, linting, type checks, targeted integration tests, and manual UI validation. The pull request should state exactly what was run, what passed, and what was not run.
+
+CI, when present, is a safety net rather than a substitute for implementation-time validation.
+
 ## Pull request expectations
 
 Keep pull requests focused enough that a reviewer can understand the change without reconstructing several unrelated intentions. Use the repository pull-request template. Include screenshots for meaningful UI changes and concrete validation for behavior, persistence, authority, or cost changes.
@@ -58,6 +64,10 @@ Prefer a smaller product with strong boundaries over a larger product with impre
 
 Read [`SUPPORT.md`](SUPPORT.md) for bug, question, and support routing. Read [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for participation expectations.
 
+## License
+
+By contributing to B.O.B., you agree that your contribution may be distributed under the repository's [MIT License](../LICENSE).
+
 ## Historical code
 
-The pre-revival implementation is historical evidence, not a supported release line and not an architectural authority. Before the repository becomes public, historical refs and objects must pass the publication gate in [`docs/PUBLIC_RELEASE.md`](../docs/PUBLIC_RELEASE.md).
+The pre-revival implementation remains historical evidence in Git history and the named archive branch. It is not a supported release line and not an architectural authority.

@@ -1,6 +1,6 @@
 # B.O.B. Documentation
 
-This directory is the authoritative design and decision surface for the Better Organized Brain revival.
+This directory is the authoritative design and decision surface for Better Organized Brain.
 
 The root [`README.md`](../README.md) is the product front door. This index answers the next question: **where is the governing detail for the thing I am about to change?**
 
@@ -29,27 +29,25 @@ flowchart TB
     TRACE --> RFC
     TRACE --> ADR
 
-    PUBLIC[PUBLIC_RELEASE.md<br/>Public repository gate] --> ROOT
     LEGACY[legacy/<br/>Historical context] -. not authoritative .-> ARCH
 ```
 
 ## Start by intent
 
-| You need to… | Read |
+| You need to... | Read |
 | --- | --- |
 | Understand why B.O.B. exists and what it owns | [`PRODUCT.md`](PRODUCT.md) |
 | Understand components, state ownership, agent bridges, trust boundaries, and data flow | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Understand Today, Inbox, Chat, accessibility, overwhelm reduction, and interaction rules | [`DESIGN.md`](DESIGN.md) |
 | Understand implementation order and acceptance gates | [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) |
 | Understand release sequencing | [`ROADMAP.md`](ROADMAP.md) |
-| Prepare the repository for public visibility | [`PUBLIC_RELEASE.md`](PUBLIC_RELEASE.md) |
 | Trace requirements to decisions and planned implementation | [`TRACEABILITY.md`](TRACEABILITY.md) |
 | Propose or review user-facing requirements | [`prd/`](prd/) |
 | Propose or review a significant implementation mechanism | [`rfc/`](rfc/) |
 | Propose or review a durable architectural choice | [`adr/`](adr/) |
 | Understand decision authority, scope, documentation, and AI-cost policy | [`governance/`](governance/) |
 | Understand what was retired from the original prototype | [`legacy/`](legacy/) |
-| Review active revival history | [`CHANGELOG.md`](CHANGELOG.md) |
+| Review active project history | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## Authority order
 
@@ -101,16 +99,16 @@ Detailed requirements are in [`governance/DOCUMENTATION_STANDARD.md`](governance
 
 ## Current implementation status
 
-The revival line is presently **design-complete enough to begin the foundation implementation, but not yet a runnable replacement application**. The active tree intentionally excludes the retired Electron/Ollama implementation so old code cannot masquerade as the current product.
+B.O.B. is public and MIT licensed, but the revived application is still pre-alpha and not yet runnable. The active tree intentionally excludes the retired Electron/Ollama implementation so old code cannot masquerade as the current product.
 
 The next implementation boundary is defined in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md): establish the Tauri/Rust foundation and canonical local-state boundary before agent integrations.
 
-## Public visibility status
-
-The repository is intentionally still private. A clean current tree is not sufficient for publication because older Git history and refs remain reachable. The repository must pass [`PUBLIC_RELEASE.md`](PUBLIC_RELEASE.md), including history sanitization, third-party-license review, a committed open-source license, secret/privacy review, and private vulnerability-reporting setup, before visibility changes.
+Repository CI is intentionally minimal. [`AGENTS.md`](../AGENTS.md) makes the implementing developer or coding agent responsible for relevant local validation and explicit evidence in each pull request.
 
 ## Historical material
 
 Do not copy architecture from old source paths because they look more concrete than the design documents. The original prototype included useful ideas alongside abandoned experiments, duplicate runtimes, an AI HTTP server, Ollama assumptions, RAG infrastructure, checked-in model artifacts, and cognitive-profile concepts that are not part of the revived product contract.
 
-See [`legacy/README.md`](legacy/README.md) for preservation and retrieval details.
+Historical implementation remains visible in older Git history and the named archive branch. It is evidence, not authority.
+
+See [`legacy/README.md`](legacy/README.md) for preservation details.
