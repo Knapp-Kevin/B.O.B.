@@ -1,6 +1,6 @@
 # PRD-0002: ADHD-Friendly Daily Planning
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Related:** PRD-0001, ADR-0001, ADR-0004
 
 ## Summary
@@ -21,7 +21,7 @@ Traditional task managers often expose too much state at once and require catego
 - make interruption and replanning cheap;
 - preserve unfinished work without punitive language;
 - expose time estimates and capacity where they reduce uncertainty;
-- allow AI assistance without making planning dependent on AI;
+- allow B.O.B. to use AI assistance without making planning dependent on inference;
 - retain accessible typography, contrast, keyboard operation, and reduced-motion controls.
 
 ## Core workflows
@@ -32,11 +32,11 @@ A user can save an unstructured thought in one action. Additional metadata is op
 
 ### Inbox organization
 
-Captured items can remain unprocessed or later become tasks, ideas, notes, or reminders. AI may propose classifications or task breakdowns with a preview.
+Captured items can remain unprocessed or later become tasks, ideas, notes, or reminders. B.O.B. may use an allowed inference runtime to propose classifications or task breakdowns with a preview.
 
 ### Plan my day
 
-B.O.B. creates a feasible plan using fixed commitments, available time, selected focus, estimates, due constraints, and completed state. AI may improve sequencing or explanation but may not create an impossible time plan that bypasses deterministic validation.
+B.O.B. creates a feasible plan using fixed commitments, available time, selected focus, estimates, due constraints, and completed state. Inference may improve sequencing or explanation but may not create an impossible time plan that bypasses deterministic validation.
 
 ### Next action
 
@@ -56,7 +56,7 @@ The user can intentionally reduce information density. B.O.B. hides nonessential
 - maximum default focus list is three items;
 - quick capture requires only content;
 - the application distinguishes inbox, planned, doing, done, deferred, and archived states;
-- planning works without AI;
+- planning works without AI inference;
 - replanning operates on remaining work only unless the user intentionally resets the day;
 - no productivity score is required;
 - overdue state must be visible without punitive or shame-oriented language;
@@ -75,7 +75,7 @@ A user can:
 6. defer an item without losing it;
 7. replan after interruption;
 8. enter reduced-information overwhelmed mode;
-9. complete these workflows without an AI bridge configured.
+9. complete these workflows without an inference runtime configured.
 
 ## Explicit exclusions
 
