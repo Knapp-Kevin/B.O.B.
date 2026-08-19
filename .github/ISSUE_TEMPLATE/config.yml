@@ -1,2 +1,8 @@
-blank_issues_enabled: true
-contact_links: []
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Knapp-Kevin/B.O.B./security/policy
+    about: Do not disclose vulnerabilities or credentials in a public issue. Read the security policy first.
+  - name: Support and questions
+    url: https://github.com/Knapp-Kevin/B.O.B./blob/master/.github/SUPPORT.md
+    about: Check the support policy before opening an issue that is not a bug or feature request.
