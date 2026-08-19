@@ -28,7 +28,7 @@ B.O.B. occupies the layer between them while presenting only one coherent assist
 
 The user talks to **B.O.B.**
 
-B.O.B. may use Claude-backed inference, Codex-backed inference, local models, future LLMs, or approved tools. Those systems are internal capabilities, not peer user-facing agents.
+B.O.B. may use Gemini-backed inference, Claude-backed inference, Codex-backed inference, local models, future LLMs, or approved tools. Those systems are internal capabilities, not peer user-facing agents.
 
 Provider/runtime identity may be visible when it matters for cost, privacy, capability, troubleshooting, or explicit user choice, but it must not become the primary interaction model.
 
@@ -36,7 +36,7 @@ Provider/runtime identity may be visible when it matters for cost, privacy, capa
 
 A user opens one application and sees what matters today, not an empty prompt and not a roster of AI providers.
 
-They can capture a thought without deciding its final category, ask B.O.B. to organize it, plan a realistic day, replan after disruption, or ask B.O.B. to perform bounded external work. B.O.B. can change the underlying model/runtime without moving canonical tasks or forcing the user into a different conversational identity.
+They can capture a thought without deciding its final category, ask B.O.B. to organize it, plan a realistic day, replan after disruption, or ask B.O.B. to perform bounded external work in a later capability slice. B.O.B. can change the underlying model/runtime when supported without moving canonical tasks or forcing the user into a different conversational identity.
 
 The user should be able to ask:
 
@@ -47,11 +47,10 @@ The user should be able to ask:
 - I am overwhelmed. Show me one thing.
 - Turn this brain dump into tasks.
 - Move unfinished work to tomorrow.
-- Use Codex for this coding work.
-- Use Claude for this writing task.
-- Keep this local.
+- Use another supported runtime for this task when available.
+- Keep this local when a local capability is configured.
 
-The last three are optional backend preferences, not separate agents the user must manage.
+Backend preferences are optional controls, not separate agents the user must manage.
 
 ## Product surfaces
 
@@ -83,16 +82,17 @@ B.O.B. Chat can:
 - break work into smaller steps;
 - answer questions using bounded B.O.B. context;
 - propose state changes;
-- honor explicit inference preferences when relevant;
-- perform bounded external work when the user intentionally delegates authority to B.O.B.
+- honor explicit inference preferences when relevant and supported;
+- later perform bounded external work when the user intentionally delegates authority to B.O.B.
 
 ### Settings
 
 Settings owns:
 
 - inference/runtime availability and defaults;
-- subscription and cost policy;
-- local inference configuration;
+- cost and billing-class policy;
+- credential and authentication state;
+- local inference configuration when local adapters are supported;
 - accessibility and visual preferences;
 - local data location, export, backup, and reset;
 - optional advanced controls.
@@ -132,15 +132,18 @@ B.O.B. reasons, summarizes, organizes, transforms, and proposes using an allowed
 
 The user explicitly grants **B.O.B.** bounded authority for a defined task. B.O.B. may then use an execution-capable runtime or approved tool inside that grant. The user is not delegating to a separate peer agent.
 
+Delegate/tool execution is a future capability relative to the first runnable alpha and does not block that alpha's Assist-mode usefulness.
+
 ## Cost model
 
-The default policy is:
+The governing policy is zero-surprise inference cost:
 
-1. subscription-backed inference/runtime integrations;
-2. local inference;
-3. metered API inference only when explicitly enabled.
+1. prefer configured zero-cost or already-included inference paths that fit the active product boundary;
+2. use local inference when supported and intentionally configured;
+3. use metered API inference only when explicitly enabled by the user;
+4. never silently fail over into separately billed inference.
 
-B.O.B. must not silently fail over to a metered provider.
+For the first runnable alpha, the resolved Wayfinder route requires **Gemini Developer API Free** as the sole inference backend. A second backend, subscription-backed adapters, and local inference are later expansion slices rather than alpha acceptance requirements.
 
 ## Canonical state
 
@@ -152,15 +155,18 @@ B.O.B. owns:
 - runtime and cost-policy configuration;
 - compact working continuity;
 - B.O.B. conversation continuity;
-- action and delegation history required for understandable behavior.
+- action history required for understandable behavior.
 
 Vendor/runtime session state may be referenced as an implementation detail but is not the canonical product state.
 
 ## Explicit non-goals
 
-The revival does not initially include:
+The first runnable alpha does not include:
 
 - a visible multi-agent swarm, agent roster, or peer-agent orchestration model;
+- a required second inference backend;
+- local inference as a first-run requirement;
+- Delegate/tool execution as an alpha requirement;
 - cognitive trait profiling;
 - diagnosis, treatment, or mental-health assessment;
 - ambient autonomous execution making open-ended changes;
@@ -173,6 +179,19 @@ The revival does not initially include:
 - silent metered API fallback;
 - gamified productivity scoring or shame-oriented analytics.
 
-## Product success criteria
+## First runnable alpha success criteria
 
-The first revived release is successful when a user can reliably capture work, plan a day, recover from interruption, converse with B.O.B. through at least one subscription-backed inference runtime, use a second runtime without losing B.O.B.'s identity or canonical state, and understand what B.O.B. will do before it changes important state or incurs metered cost.
+The first runnable alpha is successful when a Windows 11 x64 user can:
+
+- launch B.O.B. into the Today-first interaction shell;
+- capture and manage work through Today and Inbox;
+- plan and replan a realistic day and recover after interruption;
+- preserve canonical local state across restart using the resolved persistence/recovery contract;
+- complete the guided Gemini Developer API Free credential flow and converse with B.O.B. through that real inference path;
+- receive organization, breakdown, reorientation, resume/handoff, and lightweight decision-facilitation help through B.O.B. Chat;
+- preview important proposed state changes before they are applied;
+- continue using deterministic planning behavior when inference is unavailable;
+- understand provider/privacy/cost state without being forced to manage a provider dashboard;
+- verify the alpha through the resolved local validation, recovery, accessibility, and Windows packaging evidence.
+
+A second runtime is intentionally deferred to a later tracer slice and is not evidence required for first-alpha completion.
