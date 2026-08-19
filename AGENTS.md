@@ -14,12 +14,15 @@ Read, in order:
 
 1. `README.md`
 2. `docs/governance/GOVERNANCE.md`
-3. `docs/PRODUCT.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/DESIGN.md` when user-facing behavior is involved
-6. the governing PRD, RFC, ADR, and implementation-plan sections for the change
+3. `docs/governance/WAYFINDER.md` when a Wayfinder map is active or implementation derives from one
+4. `docs/PRODUCT.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/DESIGN.md` when user-facing behavior is involved
+7. the governing PRD, RFC, ADR, implementation-plan sections, and owning issue for the change
 
 The active tree is authoritative. Historical implementation is preserved on `archive/pre-revival-cleanup-2026-08-19` and must not be treated as current architecture unless a governing record explicitly brings a concept forward.
+
+When an active Wayfinder map intentionally changes a destination-specific requirement, explicit owner dispositions in resolved Wayfinder tickets govern that map destination until binding documentation is reconciled. Treat conflicts as stale-document debt, not permission to reopen a settled decision silently. The convergence audit in `docs/governance/WAYFINDER.md` must pass before implementation tickets become authoritative.
 
 ## Non-negotiable boundaries
 
@@ -28,7 +31,7 @@ The active tree is authoritative. Historical implementation is preserved on `arc
 - B.O.B. owns canonical task, plan, preference, conversation continuity, and application state.
 - Runtime adapters do not become systems of record.
 - Core capture, task, and planning behavior remains useful without AI inference.
-- Subscription-backed inference is preferred; local inference is permitted; metered inference requires explicit user enablement.
+- Prefer configured zero-cost or already-included inference paths that fit the active product boundary; metered inference requires explicit user enablement.
 - Unknown provider cost classification fails closed.
 - Normal Assist mode does not grant shell, filesystem, credential, repository, or arbitrary application authority.
 - Delegate mode means the user delegates bounded authority to B.O.B., which may use an approved runtime or tool inside that grant.
@@ -51,6 +54,8 @@ Use the smallest record set that makes the change traceable:
 | Routine bug, test, copy, or dependency maintenance | PR only |
 
 A record marked `Proposed` is not permission to pretend an unresolved decision is settled. If implementation depends on it, resolve the decision in the governing review first.
+
+When Wayfinder is active, its resolved decision tickets identify what must be reconciled into PRDs/RFCs/ADRs before the implementation handoff. A decision ticket is not a permanent substitute for the repository records required by this table.
 
 ## Engineering discipline
 
@@ -87,7 +92,7 @@ A material pull request must state:
 
 - user problem and intended outcome;
 - scope and explicit non-goals;
-- governing PRD/RFC/ADR references;
+- governing PRD/RFC/ADR and Wayfinder references when applicable;
 - architecture, data, authority, security, and inference-cost impact;
 - validation performed and evidence obtained;
 - documentation changed with the behavior.
