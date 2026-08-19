@@ -6,6 +6,10 @@
 
 The interface should reduce the number of decisions required to begin useful work. B.O.B. should feel like a calm control surface, not an analytics dashboard and not a blank chatbot.
 
+## Visual inspiration artifacts
+
+Rendered pre-alpha UI concepts live in [`docs/inspiration/`](inspiration/README.md). They are directional references for hierarchy, density, onboarding flow, and visual tone, not normative specifications. Accepted product/design decisions and Wayfinder resolutions remain authoritative when a generated artifact contains incidental or stale detail.
+
 ## Information architecture
 
 ```mermaid
