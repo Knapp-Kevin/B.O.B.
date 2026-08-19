@@ -37,7 +37,7 @@ flowchart TB
 | You need to... | Read |
 | --- | --- |
 | Understand why B.O.B. exists and what it owns | [`PRODUCT.md`](PRODUCT.md) |
-| Understand components, state ownership, agent bridges, trust boundaries, and data flow | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| Understand the single-agent architecture, state ownership, inference routing, trust boundaries, and data flow | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Understand Today, Inbox, Chat, accessibility, overwhelm reduction, and interaction rules | [`DESIGN.md`](DESIGN.md) |
 | Understand implementation order and acceptance gates | [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) |
 | Understand release sequencing | [`ROADMAP.md`](ROADMAP.md) |
@@ -66,23 +66,32 @@ A `Proposed` record is a proposal, not a loophole for implementation to choose i
 
 ```mermaid
 flowchart LR
-    USER[User] --> BOB[B.O.B.]
+    USER[User] <--> BOB[B.O.B.<br/>single agent]
     BOB --> WORK[(Tasks · Plans · Continuity · Preferences)]
-    BOB --> ROUTER[Agent bridge router]
-    ROUTER --> CLAUDE[Claude Code]
-    ROUTER --> CODEX[Codex]
+    BOB --> ROUTER[Inference + tool router]
+
+    ROUTER --> CLAUDE[Claude-backed inference]
+    ROUTER --> CODEX[Codex-backed inference]
     ROUTER --> LOCAL[GG-CORE / local]
+    ROUTER --> FUTURE[Future runtime/model]
+    ROUTER --> TOOLS[Approved tools]
 
     CLAUDE --> BOB
     CODEX --> BOB
     LOCAL --> BOB
+    FUTURE --> BOB
+    TOOLS --> BOB
 
     BOB --> POLICY{Authority + cost policy}
-    POLICY -->|Assist| PROPOSE[Propose actions]
+    POLICY -->|Assist| PROPOSE[Reason + propose]
     POLICY -->|Delegate| BOUNDED[Bounded execution]
 ```
 
-The invariant is simple: **B.O.B. owns durable personal work state. Agent systems provide intelligence and explicitly bounded execution.**
+The invariant is simple:
+
+> **B.O.B. is the agent. Models, inference runtimes, provider CLIs, and tools are capabilities behind B.O.B.**
+
+The user gets one identity, one continuity layer, and one place where only relevant complexity should become visible.
 
 ## Documentation quality bar
 
@@ -101,7 +110,7 @@ Detailed requirements are in [`governance/DOCUMENTATION_STANDARD.md`](governance
 
 B.O.B. is public and MIT licensed, but the revived application is still pre-alpha and not yet runnable. The active tree intentionally excludes the retired Electron/Ollama implementation so old code cannot masquerade as the current product.
 
-The next implementation boundary is defined in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md): establish the Tauri/Rust foundation and canonical local-state boundary before agent integrations.
+The next implementation boundary is defined in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md): establish the Tauri/Rust foundation and canonical local-state boundary before B.O.B.'s first inference adapter.
 
 Repository CI is intentionally minimal. [`AGENTS.md`](../AGENTS.md) makes the implementing developer or coding agent responsible for relevant local validation and explicit evidence in each pull request.
 

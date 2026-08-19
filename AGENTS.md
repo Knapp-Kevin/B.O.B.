@@ -6,7 +6,7 @@ Binding repository instructions for coding agents and agent-assisted development
 
 Build B.O.B. as a small, vendor-neutral personal AI workbench with ADHD-friendly interaction design.
 
-> **B.O.B. owns the work. Agents provide the intelligence.**
+> **B.O.B. is the agent. Models, inference runtimes, and tools are capabilities behind B.O.B.**
 
 ## Read before changing anything
 
@@ -23,14 +23,17 @@ The active tree is authoritative. Historical implementation is preserved on `arc
 
 ## Non-negotiable boundaries
 
-- B.O.B. owns canonical task, plan, preference, continuity, and application state.
-- Agent bridges do not become systems of record.
-- Core capture, task, and planning behavior remains useful without AI.
+- B.O.B. is the only user-facing agent identity.
+- Multiple LLMs, inference runtimes, vendor CLIs, and tools are internal capabilities, not peer agents.
+- B.O.B. owns canonical task, plan, preference, conversation continuity, and application state.
+- Runtime adapters do not become systems of record.
+- Core capture, task, and planning behavior remains useful without AI inference.
 - Subscription-backed inference is preferred; local inference is permitted; metered inference requires explicit user enablement.
 - Unknown provider cost classification fails closed.
-- Normal Assist mode does not grant shell, filesystem, credential, or arbitrary application authority.
-- Delegate mode requires explicit scope, workspace, capabilities, and visible cost class.
-- Agent output is untrusted until B.O.B. validates proposed application actions.
+- Normal Assist mode does not grant shell, filesystem, credential, repository, or arbitrary application authority.
+- Delegate mode means the user delegates bounded authority to B.O.B., which may use an approved runtime or tool inside that grant.
+- Model/runtime output is untrusted until B.O.B. validates proposed application actions.
+- Provider/runtime detail may be visible when relevant, but must not become a multi-agent interaction model.
 - Do not add cognitive profiling, diagnostic scoring, inferred neurodivergence traits, guilt mechanics, or productivity scoring disguised as wellbeing support.
 - Accessibility and low cognitive load are product requirements, not post-launch polish.
 - Do not add a service, daemon, database, framework, runtime, or dependency without a current requirement and documented architectural reason.
@@ -51,14 +54,15 @@ A record marked `Proposed` is not permission to pretend an unresolved decision i
 
 ## Engineering discipline
 
-- Keep UI, application core, persistence, policy, and agent bridges separated by explicit boundaries.
+- Keep UI, B.O.B. agent core, deterministic services, persistence, policy, inference routing, runtime adapters, and tool gateway separated by explicit boundaries.
 - Prefer typed data contracts at every trust boundary.
 - Keep deterministic planning logic deterministic and directly tested.
-- Never put secrets in renderer state, logs, prompts, screenshots, fixtures, or ordinary application data.
+- Never put secrets in frontend state, logs, prompts, screenshots, fixtures, or ordinary application data.
 - Make destructive state changes recoverable where practical.
-- Treat provider CLIs and external agents as external processes with failure, version, auth, cancellation, and output-validation concerns.
+- Treat provider CLIs and external runtimes as external processes with failure, version, auth, cancellation, and output-validation concerns.
 - Do not silently widen workspace or filesystem permissions.
-- Do not silently change provider or cost class.
+- Do not silently change provider, runtime, model, or cost class where that change materially affects user intent, privacy, or billing.
+- Preserve B.O.B. conversation identity when the inference backend changes.
 - Update documentation in the same change that makes a documented statement true or false.
 
 ## Validation responsibility

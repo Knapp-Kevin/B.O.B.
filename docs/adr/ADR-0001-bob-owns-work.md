@@ -1,35 +1,48 @@
-# ADR-0001: B.O.B. Owns the Work; Agents Provide the Intelligence
+# ADR-0001: B.O.B. Is the Agent and Owns the Work
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-08-19
 
 ## Context
 
-Claude, ChatGPT, Codex, Claude Code, local models, and future agents already provide model-specific interfaces. B.O.B. cannot and should not compete by rebuilding each vendor product.
+Claude, ChatGPT, Codex, Claude Code, local models, and future AI runtimes already provide powerful model-specific capabilities. B.O.B. should not compete by rebuilding every vendor product, nor should it expose a collection of peer agents that the user must manage.
 
-The differentiated value is a consistent personal work layer across those agents.
+B.O.B.'s differentiated value is a single coherent personal agent and work layer that can draw on different models, inference runtimes, and tools without fragmenting the user experience.
 
 ## Decision
 
-B.O.B. owns canonical tasks, plans, preferences, continuity, application actions, and user-facing workflow state.
+B.O.B. is the single user-facing agent.
 
-Agent systems provide reasoning, generation, and explicitly delegated execution through bounded bridges.
+B.O.B. owns canonical tasks, plans, preferences, continuity, application actions, conversation identity, and user-facing workflow state.
+
+Models, inference runtimes, vendor CLIs, and tools provide capabilities behind B.O.B. They do not become peer user-facing agents or systems of record.
+
+Provider/runtime identity may be exposed when relevant to cost, privacy, capability, troubleshooting, or explicit user choice, but ordinary interaction remains with B.O.B.
 
 ## Consequences
 
 Positive:
 
-- vendor switching does not move canonical work state;
-- B.O.B. remains useful without AI;
-- agent replacement is an integration change rather than a product rewrite;
-- user experience can optimize for executive function instead of vendor chat conventions.
+- the user has one point of contact;
+- changing models/runtimes does not move canonical work state or conversation identity;
+- B.O.B. remains useful without AI inference;
+- runtime replacement is an integration change rather than a product rewrite;
+- the interface can optimize for executive function instead of provider mechanics;
+- complex back-end capability does not require complex front-end mental models.
 
 Costs:
 
-- B.O.B. must implement a context broker and proposal-validation layer;
-- some vendor-native session features may not transfer between bridges;
-- continuity summaries require deliberate product design.
+- B.O.B. must implement a context broker, inference router, and proposal-validation layer;
+- runtime-specific session features may not transfer directly;
+- continuity summaries require deliberate product design;
+- the application must distinguish B.O.B. authority from underlying runtime capabilities.
 
-## Rejected alternative
+## Rejected alternatives
 
-Making a vendor conversation/session the system of record would reduce initial integration work but would make B.O.B. dependent on that vendor's data and lifecycle semantics.
+### Multi-agent user-facing architecture
+
+Presenting Claude, Codex, local runtimes, and future systems as peer agents would expose infrastructure complexity directly to the user and undermine B.O.B.'s simplified one-point-of-contact purpose.
+
+### Vendor session as system of record
+
+Making a vendor conversation/session canonical would reduce initial integration work but would make B.O.B. dependent on that vendor's data and lifecycle semantics.
