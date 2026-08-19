@@ -1,6 +1,8 @@
 # Contributing to B.O.B.
 
-B.O.B. is currently a private revival project. Contributions should make the product clearer, smaller, safer, and easier to use under real executive-function load.
+B.O.B. is in active revival. Contributions should make the product clearer, smaller, safer, and easier to use under real executive-function load.
+
+> **License gate:** external code contributions should not be accepted until the repository contains a committed `LICENSE`. If this repository is public and `LICENSE` is absent, issues and design feedback are welcome, but implementation contributions should wait until the licensing terms are explicit.
 
 ## Start with the contract
 
@@ -14,6 +16,14 @@ Before implementation, read:
 6. the relevant PRD, RFC, ADR, and implementation-plan sections
 
 Do not infer current requirements from the archived Electron/Ollama implementation.
+
+## Before opening work
+
+Search existing issues and pull requests first. For a meaningful feature, prefer opening or joining an issue before investing heavily in implementation. Small documentation fixes and narrowly obvious bug fixes do not need a ceremony committee.
+
+Never include credentials, tokens, private files, personal data, or vulnerability details in issues, pull requests, screenshots, fixtures, or logs. Security reports follow [`SECURITY.md`](SECURITY.md).
+
+Participation is governed by [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Contribution standard
 
@@ -30,6 +40,12 @@ Material pull requests should make the following reviewable without archaeology:
 - **Evidence:** tests, manual validation, screenshots where appropriate, and failure-path verification;
 - **Traceability:** PRD, RFC, ADR, issue, or explicit explanation when none is required.
 
+## Pull request expectations
+
+Keep pull requests focused enough that a reviewer can understand the change without reconstructing several unrelated intentions. Use the repository pull-request template. Include screenshots for meaningful UI changes and concrete validation for behavior, persistence, authority, or cost changes.
+
+Maintainers may close superseded, duplicate, out-of-scope, or abandoned contributions. Closing a proposal is a scope decision, not a judgment on the person who submitted it.
+
 ## Definition of done
 
 A change is complete when its behavior satisfies the governing acceptance criteria, deterministic logic has appropriate tests, security and authority boundaries remain explicit, metered inference cannot occur unexpectedly, accessibility has not regressed, documentation matches the shipped behavior, and no dead parallel path is left behind without a documented reason.
@@ -38,6 +54,10 @@ A change is complete when its behavior satisfies the governing acceptance criter
 
 Prefer a smaller product with strong boundaries over a larger product with impressive nouns. B.O.B. should integrate specialized agents rather than reimplement them, own personal work state rather than vendor sessions, and remove obsolete paths rather than preserve them indefinitely in the active tree.
 
+## Support and community
+
+Read [`SUPPORT.md`](SUPPORT.md) for bug, question, and support routing. Read [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for participation expectations.
+
 ## Historical code
 
-The pre-revival repository is preserved on `archive/pre-revival-cleanup-2026-08-19`. It is historical evidence, not a supported branch and not an architectural authority.
+The pre-revival implementation is historical evidence, not a supported release line and not an architectural authority. Before the repository becomes public, historical refs and objects must pass the publication gate in [`docs/PUBLIC_RELEASE.md`](../docs/PUBLIC_RELEASE.md).
