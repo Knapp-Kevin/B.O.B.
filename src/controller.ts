@@ -1,4 +1,5 @@
-import { activeItem, escapeHtml, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
+import { activeItem, escapeHtml, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
+import { loadPersistentWorkState, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -21,6 +22,23 @@ window.addEventListener("bob:render", queueRender);
 export function render() {
   root.innerHTML = renderShell();
   bindEvents();
+}
+
+async function commitWorkState(successMessage?: string) {
+  try {
+    await savePersistentWorkState(persistentWorkState());
+    if (successMessage) showToast(successMessage);
+  } catch (error) {
+    console.error("Failed to persist B.O.B. work state", error);
+    try {
+      const durable = await loadPersistentWorkState();
+      if (durable) hydratePersistentWorkState(durable);
+    } catch (reloadError) {
+      console.error("Failed to restore last durable B.O.B. work state", reloadError);
+    }
+    showToast("Could not save that change. B.O.B. kept the last durable work state where possible.");
+  }
+  render();
 }
 
 function pushConversation(text: string) {
@@ -50,21 +68,18 @@ function bindEvents() {
     if (!title) return;
     const id = `capture-${Date.now()}`;
     state.items.unshift({ id, kind: "note", title, priority: "normal", status: "inbox" });
-    showToast("Captured to Inbox. Your next action did not change.");
-    render();
+    void commitWorkState("Captured to Inbox. Your next action did not change.");
   });
 
   document.querySelector("#start")?.addEventListener("click", () => {
     activeItem().status = "doing";
-    showToast("Started. Everything else can wait for now.");
-    render();
+    void commitWorkState("Started. Everything else can wait for now.");
   });
   document.querySelector("#defer")?.addEventListener("click", () => {
     activeItem().status = "deferred";
     const next = state.items.find((item) => item.status === "planned" && item.id !== state.activeId);
     if (next) state.activeId = next.id;
-    showToast("Deferred without losing it.");
-    render();
+    void commitWorkState("Deferred without losing it.");
   });
   document.querySelector("#replan")?.addEventListener("click", () => {
     showToast("Prototype replan keeps completed work and reshapes only what remains.");
@@ -73,15 +88,17 @@ function bindEvents() {
 
   document.querySelectorAll<HTMLElement>("[data-complete]").forEach((element) => element.addEventListener("click", () => {
     const item = state.items.find((candidate) => candidate.id === element.dataset.complete);
-    if (item) item.status = item.status === "done" ? "planned" : "done";
-    render();
+    if (!item) return;
+    item.status = item.status === "done" ? "planned" : "done";
+    void commitWorkState();
   }));
   document.querySelectorAll<HTMLElement>("[data-active]").forEach((element) => element.addEventListener("click", () => {
     const item = state.items.find((candidate) => candidate.id === element.dataset.active);
-    if (item && item.status === "inbox") item.status = "planned";
-    state.activeId = element.dataset.active!;
+    if (!item) return;
+    if (item.status === "inbox") item.status = "planned";
+    state.activeId = item.id;
     state.route = "today";
-    render();
+    void commitWorkState();
   }));
   document.querySelectorAll<HTMLElement>("[data-filter]").forEach((element) => element.addEventListener("click", () => {
     state.filter = element.dataset.filter as "all" | ItemKind;
@@ -139,8 +156,7 @@ function bindEvents() {
     }
     state.pendingProposal = undefined;
     state.route = "today";
-    showToast("Applied the previewed change. Everything else stayed put.");
-    render();
+    void commitWorkState("Applied the previewed change. Everything else stayed put.");
   });
   document.querySelector("#dismiss-proposal")?.addEventListener("click", () => {
     state.pendingProposal = undefined;

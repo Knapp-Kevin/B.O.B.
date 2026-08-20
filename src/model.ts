@@ -13,6 +13,11 @@ export interface WorkItem {
   status: ItemStatus;
 }
 
+export interface PersistentWorkState {
+  activeId: string | null;
+  items: WorkItem[];
+}
+
 export interface ChatMessage {
   author: "user" | "bob";
   text: string;
@@ -71,6 +76,19 @@ export const state: AppState = {
   largerText: false,
   reducedMotion: false,
   toast: ""
+};
+
+export const persistentWorkState = (): PersistentWorkState => ({
+  activeId: state.activeId || null,
+  items: state.items.map((item) => ({ ...item }))
+});
+
+export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
+  if (snapshot.items.length === 0) return false;
+  state.items = snapshot.items.map((item) => ({ ...item }));
+  const requested = snapshot.activeId ? state.items.find((item) => item.id === snapshot.activeId) : undefined;
+  state.activeId = requested?.id ?? state.items.find((item) => item.status === "planned")?.id ?? state.items[0]!.id;
+  return true;
 };
 
 export const activeItem = () => state.items.find((item) => item.id === state.activeId) ?? state.items.find((item) => item.status === "planned") ?? state.items[0]!;
