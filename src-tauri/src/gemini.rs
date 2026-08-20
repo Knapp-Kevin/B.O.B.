@@ -7,7 +7,6 @@ use tauri::State;
 use zeroize::{Zeroize, Zeroizing};
 
 const VALIDATION_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1";
-const CLIENT_ID: &str = "mythologiq-bob/0.0.1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -109,7 +108,6 @@ impl GeminiCredentials {
             .client
             .get(VALIDATION_URL)
             .header("x-goog-api-key", api_key)
-            .header("x-goog-api-client", CLIENT_ID)
             .send()
             .await;
 
