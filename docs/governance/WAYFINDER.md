@@ -2,257 +2,144 @@
 
 ## Purpose
 
-Wayfinder is B.O.B.'s governed design-resolution process for moving from product intent to build-ready implementation without forcing coding agents to invent architecture, product behavior, or acceptance criteria.
-
-It exists to answer one question at a time until the implementation route is clear.
+Wayfinder is B.O.B.'s governed design-resolution process for turning product intent into executable decisions without forcing implementation agents to invent consequential product or architecture behavior.
 
 The current canonical map for the first runnable alpha is the GitHub issue titled `Wayfinder map: first runnable B.O.B. alpha`.
 
+The first runnable alpha is a waypoint, not a terminal execution boundary. Wayfinder protects unresolved decision boundaries while already-settled, disjoint implementation may continue toward a runnable, coherent, validated product.
+
 ## Core principles
 
-1. **The map is an index, not the decision store.**
-   - Decisions live in their owning tickets.
-   - The map carries only concise state, a one-line gist, and links.
-2. **Resolve only the current frontier.**
-   - Do not pre-slice vague fog into speculative tickets.
-   - A decision becomes a ticket only when the question can be stated precisely enough to resolve.
-3. **Research facts; ask humans for judgment.**
-   - Agents research current technical, provider, standards, and repository facts independently.
-   - Owner input is reserved for product, architecture, risk, experience, and priority decisions that genuinely require owner judgment.
-4. **One user-facing B.O.B. agent.**
-   - Models, runtimes, provider CLIs, and tools remain capabilities behind B.O.B.
-5. **Smallest sufficient product.**
-   - Prefer the smallest decision and implementation boundary that proves useful behavior without creating avoidable platform, provider, or operational scope.
-6. **No implementation through unresolved fog.**
-   - Production implementation begins only after the in-scope decision route is clear and the convergence audit passes.
+1. **The map is an index, not the decision store.** Decisions live in their owning tickets; the map carries concise state and pointers.
+2. **Resolve only consequential uncertainty.** Routine implementation details that are safely derivable from accepted product, architecture, governance, ADR/RFC, UX, security, and prior owner decisions do not require a new HITL ticket.
+3. **Research facts; ask humans for judgment.** Agents research technical/provider facts independently. Escalate only genuinely consequential unresolved owner choices.
+4. **One user-facing B.O.B. agent.** Models, runtimes, provider CLIs, and tools remain capabilities behind B.O.B.
+5. **Smallest sufficient product.** Prefer narrow tracer bullets and explicit seams over speculative frameworks.
+6. **No implementation through unresolved authority.** Work that depends on an unresolved consequential decision remains blocked. Safe disjoint work authorized by settled repository authority may proceed.
+7. **Continuous governed progression.** Do not stop the development loop merely because another planning or `wayfinder:grilling` ticket exists. Keep advancing executable, non-conflicting scope.
 
 ## Artifact roles
 
 ### Map
 
-The map owns:
-
-- destination;
-- settled-decision pointers;
-- current frontier;
-- in-scope fog that is not yet precise enough to ticket;
-- explicit out-of-scope boundaries;
-- handoff rules for the build-ready specification.
-
-The map must not duplicate full ticket resolutions.
+The map owns the destination, settled-decision pointers, current consequential decision frontier, in-scope fog, explicit out-of-scope boundaries, and handoff context. It must not duplicate full ticket resolutions.
 
 ### Decision ticket
 
-A decision ticket owns one precise question. It should contain enough context that a fresh agent can understand the decision without reconstructing the whole repository.
+A decision ticket owns one precise consequential question. Tickets are:
 
-Decision tickets are either:
-
-- **HITL grilling:** requires owner disposition;
+- **HITL grilling:** requires owner judgment;
 - **HITL prototype:** requires owner review of a bounded decision aid;
-- **AFK research:** factual question that can be resolved autonomously from authoritative evidence.
+- **AFK research:** factual question that can be resolved autonomously.
+
+Do not create a decision ticket for ordinary engineering choices that are already constrained by accepted authority.
 
 ### Fog
 
-Fog is an unresolved area whose exact decision question is not yet known.
-
-Do not create a ticket merely because an area is incomplete. Graduate fog into a ticket only when the question, consequence, and completion condition are precise.
+Fog is an unresolved area whose exact consequential question is not yet known. Do not manufacture tickets from vague possibility.
 
 ## Live-state recomputation
 
-Every Wayfinder run begins from live repository state.
+Every governed run begins from live repository state. Read the current default branch, this guide, the canonical map, relevant open/recent Wayfinder tickets and comments, active implementation claims, PR state, and governing record lifecycle state.
 
-Read:
+Never trust a hardcoded scheduler frontier or stale handoff over current GitHub evidence.
 
-1. current default branch;
-2. this operating guide;
-3. the canonical Wayfinder map;
-4. every open Wayfinder-labelled ticket;
-5. recently resolved Wayfinder tickets relevant to the current frontier;
-6. new comments and owner dispositions;
-7. current assignees/claims;
-8. relevant pull-request and accepted/proposed record state when it affects the decision graph.
+## Authority precedence
 
-Never trust a hardcoded previous frontier, scheduler handoff, old comment, or stale status summary over current GitHub state.
+1. Explicit owner directions and dispositions recorded in the repository govern the affected destination.
+2. Accepted ADRs, RFCs, PRDs, governance, product, architecture, and design documents remain binding except where a newer explicit owner decision supersedes a destination-specific assumption.
+3. Contradictions created by newer owner direction are stale-document debt and should be reconciled promptly through normal review.
+4. Stale text does not freeze unrelated implementation that is already authorized by settled authority.
+5. A Wayfinder ticket does not silently rewrite unrelated long-term policy.
 
-## Authority precedence during an active Wayfinder map
+## Decision frontier
 
-For the planning effort governed by a Wayfinder map:
+The decision frontier is the set of consequential open questions that are in scope, precise enough to resolve, not blocked by prerequisites, and not invalidated by newer authority.
 
-1. explicit owner dispositions in resolved Wayfinder tickets govern the current map destination;
-2. accepted ADRs, RFCs, PRDs, governance documents, and product documents remain binding except where a resolved Wayfinder decision intentionally changes the destination-specific requirement;
-3. contradictions created by a newer resolved Wayfinder decision are **stale-document debt**, not grounds to silently reopen the settled decision;
-4. stale binding documentation must be reconciled before the convergence audit can pass and before the final build-ready specification becomes authoritative.
+The **build frontier** is separate: it consists of bounded implementation/review/validation work whose required decisions are already settled and whose ownership does not conflict with active work.
 
-A Wayfinder ticket does not silently rewrite unrelated long-term policy. Reconciliation must make the intended scope explicit.
+A governed cycle may advance the build frontier while a decision ticket remains open, provided the work does not depend on that unresolved decision.
 
-## Frontier calculation
+## Claim and concurrency discipline
 
-The frontier is the set of open decision tickets that are:
+Before taking an implementation slice, inspect current issue/map comments and open PRs for active ownership.
 
-- in scope for the map destination;
-- precise enough to resolve;
-- not blocked by an unresolved prerequisite;
-- not already claimed by another active resolver;
-- not invalidated by a newer decision.
-
-Choose work only after recomputing this set.
-
-If several tickets are technically eligible, prefer the one whose resolution most directly constrains the others or removes the most downstream ambiguity.
-
-## Claim discipline
-
-Before resolving a selected decision ticket, claim it by assignment.
-
-Per run:
-
-- claim at most one HITL decision ticket;
-- eligible AFK research may also be completed within the same run when it directly supports the frontier or removes a future blocker;
-- do not claim another HITL ticket merely because the active one is waiting for the owner.
-
-A claimed HITL ticket remains the active owner gate until the owner responds or the ticket is otherwise invalidated.
+- Do not duplicate an actively claimed implementation slice.
+- Prefer disjoint implementation, adversarial review, validation, stale-document reconciliation, security/privacy hardening, or blocker removal.
+- Claim at most one new HITL decision per cycle when a genuinely consequential owner choice is unavoidable.
+- AFK research may proceed when it directly supports an active decision or removes a concrete blocker.
 
 ## Grilling protocol
 
-A grilling ticket should ask the entire currently answerable decision frontier for that one question in a single round.
+For a genuinely consequential owner decision, ask the entire currently answerable frontier for that question in one round. State each decision plainly, recommend an answer, explain consequences, separate verified facts from judgment, and end with a concise proposed resolution that can be accepted or amended by numbered item.
 
-For each decision item:
-
-1. state the decision plainly;
-2. provide the recommended answer;
-3. explain the consequences and relevant tradeoffs;
-4. distinguish verified repository/external facts from judgment;
-5. avoid asking the owner to research facts the agent can obtain independently.
-
-End with one proposed resolution block concise enough that the owner can respond with `accept as proposed` or amend specific numbered items.
-
-Do not resolve the human side of a grilling ticket autonomously.
+Do not infer the owner's side of an unresolved consequential decision. Conversely, do not turn routine engineering details into owner homework.
 
 ## Prototype protocol
 
-A prototype is a bounded decision aid, not implementation authority.
-
-Prototype only enough to answer the ticket's user-experience question. Record the exact reviewed artifact or commit when useful. Owner approval resolves the UX decision, not unrelated architecture.
+A prototype is a bounded decision aid. Owner approval resolves the UX/product question demonstrated by the artifact, not unrelated architecture.
 
 ## Research protocol
 
-AFK research tickets may be resolved autonomously.
-
-Use current authoritative or primary sources where external facts matter. Record:
-
-- question answered;
-- evidence;
-- finding;
-- consequence for the Wayfinder route;
-- any newly precise decision surfaced by the research.
-
-Close the research ticket only when its factual question is actually answered.
+AFK research may be resolved autonomously using authoritative evidence. Record the question, evidence, finding, consequence, and any newly precise consequential decision.
 
 ## Blocker sweep
 
-Every run performs a blocker sweep after frontier recomputation.
+Every run checks for blockers and next safe work. Look for:
 
-Look for current or likely future blockers such as:
+- stale scheduler/map/document handoffs;
+- contradictory binding documentation;
+- active overlapping implementation claims;
+- unresolved factual prerequisites;
+- obsolete or superseded tickets;
+- invalid blocker assumptions;
+- already-resolved owner questions that remain open elsewhere;
+- tool, credential, platform, repository-access, test, packaging, or deployment limitations;
+- hidden choices that would force a coding agent to invent consequential behavior.
 
-- stale scheduler handoffs;
-- contradictory accepted/binding documentation;
-- unresolved researchable facts;
-- obsolete tickets preserved after a superseding decision;
-- invalid or circular blocker assumptions;
-- already-resolved owner questions that still appear open elsewhere;
-- missing authority precedence;
-- tool, credential, platform, or repository-access limitations;
-- hidden implementation choices that a future coding agent would otherwise be forced to invent.
-
-Resolve researchable or process blockers autonomously when within scope. Record remaining precise blockers in the owning ticket or map. Do not manufacture tickets from vague possibility alone.
+Resolve researchable/process blockers autonomously when safe. A normal open planning ticket is not a portfolio-wide blocker unless the selected work actually depends on it.
 
 ## Waiting behavior
 
-A HITL wait is not a process failure.
+A HITL wait blocks only work that depends on that owner decision.
 
-While waiting for owner disposition:
+While waiting:
 
-- do not create additional HITL questions merely to stay busy;
 - do not repeat waiting comments;
-- do not pause the recurring Wayfinder automation solely because an owner decision is pending;
-- use available capacity for eligible AFK research, stale-state reconciliation, blocker removal, or a silent verified no-op.
-
-The next run must reread the active owner ticket and immediately recognize a new owner response.
-
-## Scope and invalidation
-
-When a decision proves beyond the map destination:
-
-- close it as not planned when appropriate;
-- record it under out-of-scope or future direction, not `Decisions so far`.
-
-When a resolution invalidates another open ticket, update or close the obsolete ticket rather than preserving contradictory work for historical decoration.
+- do not pause the recurring development automation solely because owner input is pending;
+- continue safe disjoint implementation, review, tests, validation, documentation reconciliation, security/privacy hardening, packaging/readiness work, or blocker removal;
+- surface any unavoidable consequential owner gate explicitly rather than silently returning repeated no-change cycles.
 
 ## Documentation reconciliation
 
-Wayfinder may reveal that older accepted documentation no longer matches the resolved destination.
+When a newer owner direction or resolved decision makes binding documentation stale, reconcile it through normal repository governance. Preserve long-term policy distinctions when a change is waypoint-specific.
 
-Before declaring the route clear:
-
-1. identify every binding or high-authority document made stale by the resolved ticket set;
-2. update those documents through normal repository governance;
-3. preserve long-term policy distinctions when a change is alpha-specific;
-4. ensure `AGENTS.md` gives fresh coding agents the same authority ordering as this guide;
-5. ensure proposed/accepted ADR, RFC, and PRD status accurately reflects the final route.
-
-Documentation is part of correctness, not post-handoff cleanup.
+Documentation debt should be fixed promptly, but it does not prohibit unrelated already-authorized implementation.
 
 ## Convergence audit
 
-After the final in-scope decision is resolved, run a convergence audit before writing implementation tickets.
+A convergence audit is still required before claiming the Wayfinder map itself is complete or presenting its final build-ready specification as fully reconciled authority.
 
-The audit passes only when all are true:
+The audit passes when no unresolved in-scope consequential decision/fog remains, binding documents agree with the destination, record lifecycle states are unambiguous, obsolete blockers are removed, required factual research is complete, and the remaining implementation can proceed without inventing consequential product/architecture/persistence/provider/authority/validation policy.
 
-- no unresolved in-scope Wayfinder decision remains;
-- no in-scope fog remains;
-- no accepted or binding document contradicts the resolved destination;
-- every ADR, RFC, or PRD needed by the alpha has an unambiguous lifecycle state;
-- no open ticket is obsolete, superseded, or incorrectly blocking the route;
-- no required factual research remains unresolved;
-- a coding agent can implement without choosing product behavior, architecture, persistence semantics, provider/cost behavior, authority boundaries, or validation policy;
-- out-of-scope work is explicitly excluded rather than merely forgotten.
+Failure of map convergence does **not** invalidate already-settled disjoint tracer bullets.
 
-If any condition fails, the map is not clear.
+## Handoff and continuous build
 
-## Handoff to implementation
+As decisions settle, convert them into narrow end-to-end tracer bullets when useful. Each implementation slice should be independently demoable or verifiable, sized for one fresh coding-agent context, explicit about real blockers, and tied to accepted authority.
 
-Only after the convergence audit passes:
-
-1. synthesize one build-ready first-alpha specification using the established to-spec shape:
-   - problem;
-   - solution;
-   - user stories;
-   - implementation decisions;
-   - testing/validation decisions;
-   - explicit non-goals and deferred work;
-2. convert the specification into tracer-bullet implementation tickets using the established to-tickets shape;
-3. make each ticket a narrow end-to-end behavior that is independently demoable or verifiable, sized for one fresh coding-agent context, and explicit about real blockers;
-4. begin implementation only from the unblocked build frontier.
+After full map convergence, synthesize the complete waypoint specification and reconcile its implementation ticket set. Continue building beyond that waypoint according to the next repository-authorized frontier rather than treating alpha completion as a stop condition.
 
 ## Validation and CI
 
-Keep GitHub Actions deliberately small unless a stronger gate is justified by risk.
+Keep GitHub Actions deliberately small unless a stronger gate is justified by risk. Minimal CI does not mean minimal verification.
 
-Implementation agents must provide truthful reproducible evidence for relevant local build, format, lint/type, unit, integration, restart/recovery, packaging, and manual UX checks. Missing tooling or unavailable dependencies are not passing evidence.
+Implementation agents must provide truthful evidence for the strongest relevant checks available: build, format/lint/type checks, unit/integration tests, restart/recovery, packaging, and rendered/manual UX checks. Missing tooling or unavailable dependencies are not passing evidence.
 
 Only merged default-branch implementation counts as landed product progress.
 
 ## Scheduler contract
 
-A scheduled Wayfinder task should be intentionally thin.
+A scheduled governed development task should be thin and repository-led. It should recompute live state, perform a blocker/next-work sweep, respect active ownership, preserve consequential authority gates, and seek one bounded substantive advancement per run.
 
-It should:
-
-- point to this guide and the canonical map;
-- require medium-depth-or-higher reasoning appropriate to product/architecture work;
-- recompute live state every run;
-- perform the blocker sweep;
-- obey claim and HITL/AFK discipline;
-- remain enabled during HITL waits;
-- never contain mutable frontier state, current ticket IDs other than the permanent map pointer, or hardcoded claims about what decision comes next.
-
-Repository state owns project truth. The scheduler owns cadence only.
+Do not encode mutable frontier state in the scheduler prompt as repository truth. Repository state owns project truth; scheduling owns cadence.

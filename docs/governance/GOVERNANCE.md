@@ -10,7 +10,9 @@ The repository owner is the final product and technical authority unless authori
 
 Material changes are reviewed through pull requests. Product intent, implementation proposals, and durable architecture decisions are recorded separately so that code cannot quietly redefine the product after the fact.
 
-When an active Wayfinder map is being used to resolve a bounded product destination, follow [`WAYFINDER.md`](WAYFINDER.md). Explicit owner dispositions in resolved Wayfinder tickets govern that destination when they intentionally supersede older destination-specific assumptions, but the resulting documentation debt must be reconciled before implementation handoff.
+When an active Wayfinder map is being used to resolve a bounded product destination, follow [`WAYFINDER.md`](WAYFINDER.md). Explicit owner dispositions govern the affected destination when they intentionally supersede older assumptions. Resulting documentation debt should be reconciled promptly through normal review.
+
+An unresolved consequential decision blocks implementation that depends on that decision. It does not freeze unrelated work whose required behavior and boundaries are already established by accepted authority. The development loop should continue through safe disjoint implementation, review, validation, hardening, packaging/readiness, and blocker-removal work while preserving active ownership boundaries.
 
 ## Decision records
 
@@ -35,7 +37,7 @@ stateDiagram-v2
     Superseded --> [*]
 ```
 
-A merged document is not automatically evidence that every unresolved design choice inside it has been accepted. Status fields remain authoritative. Implementation that depends on a `Proposed` decision must resolve that decision first.
+A merged document is not automatically evidence that every unresolved design choice inside it has been accepted. Status fields remain authoritative. Implementation that depends on a `Proposed` consequential decision must resolve that decision first.
 
 ## Governing product boundary
 
@@ -65,6 +67,7 @@ A material change should make these answers obvious:
 8. How is success and failure validated?
 9. Which documentation becomes true or false because of this change?
 10. What can be deleted because this change exists?
+11. Is another active implementation already claiming this surface?
 
 ## Hard rules
 
@@ -83,6 +86,10 @@ Assist mode proposes. Delegate mode acts only within an explicit bounded grant. 
 ### Documentation is part of correctness
 
 A capability is not complete when its architecture, state ownership, authority, cost behavior, or user-visible behavior is materially undocumented. Documentation changes ship with the change that makes them true.
+
+### Unresolved decisions are scoped blockers
+
+A consequential unresolved decision blocks only work that depends on it. Already-authorized disjoint tracer bullets may proceed when their requirements, authority boundaries, validation expectations, and ownership are clear.
 
 ### The active tree represents the active product
 
