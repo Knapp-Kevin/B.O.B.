@@ -63,7 +63,7 @@ flowchart TB
     end
 
     subgraph DATA[Local Persistence]
-        STORE[(Canonical Store)]
+        STORE[(SQLite Canonical Store)]
         HISTORY[(Action + Continuity History)]
         SECRET[Protected Credential References]
     end
@@ -167,9 +167,22 @@ Delegate/tool execution is not a first-alpha requirement. The alpha must preserv
 
 ### Persistence
 
-Persistence is local-first and single-user. It must support schema versioning, recovery, export, migration, and separation of protected credentials from ordinary state.
+Persistence is local-first and single-user. The accepted first-alpha contract is:
 
-The exact first-alpha store and recovery contract remains governed by the active Wayfinder persistence decision until owner disposition.
+- one SQLite database owned exclusively by the Rust core as canonical ordinary application state;
+- every logical state change commits transactionally or not at all;
+- Rust owns immutable monotonic migrations and startup compatibility checks;
+- schema-changing migrations create SQLite-consistent safety copies and fail closed on open/migration failure;
+- B.O.B. retains two bounded pre-migration known-good safety copies;
+- ordinary crash consistency relies on SQLite rather than custom shadow-file logic;
+- backup/restore uses SQLite-consistent snapshots;
+- portable export is a documented versioned JSON package of user-owned non-secret state;
+- credentials remain in the OS secret store, with SQLite limited to non-secret references/status;
+- corruption or migration failure never silently resets user data.
+
+The SQLite schema owns ordinary alpha product state, not an open-ended advanced memory subsystem. When richer governed-memory behavior becomes relevant, B.O.B. should preferentially integrate with the existing `MythologIQ-Labs-LLC/agent-memory` project through a later explicit contract rather than independently inventing a competing memory architecture.
+
+See ADR-0004 and RFC-0003.
 
 ## First-alpha request flow
 
@@ -272,6 +285,8 @@ B.O.B. stores compact continuity needed to preserve the one-agent experience acr
 
 Vendor/runtime transcripts are not required to become canonical state.
 
+This compact alpha continuity is ordinary product state. Richer governed-memory semantics remain a later explicit Agent Memory integration decision rather than implicit permission to grow the SQLite schema into a new memory platform.
+
 ## Authority model
 
 Authority belongs to B.O.B., not directly to whichever runtime supplied inference.
@@ -306,7 +321,7 @@ B.O.B. must degrade safely:
 - free quota exhausted: remain non-metered and explain the available next step;
 - invalid or missing credential: do not send inference requests and preserve deterministic operation;
 - invalid model proposal: reject without changing canonical state;
-- persistence interruption: follow the resolved persistence/recovery contract and never silently reset user state;
+- persistence interruption: preserve user data and follow the accepted SQLite migration/recovery contract in ADR-0004/RFC-0003;
 - runtime/provider failure: isolate failure from canonical state;
 - future tool failure: return evidence/status without silently widening authority.
 
@@ -321,6 +336,7 @@ First-alpha direction:
 - one B.O.B. agent identity;
 - Gemini Developer API Free first inference adapter;
 - internal inference/runtime adapter boundary;
+- Rust-owned SQLite canonical ordinary-state store;
 - protected OS secret-store boundary;
 - no required local HTTP inference server;
 - no required Python runtime;
@@ -328,6 +344,7 @@ First-alpha direction:
 - no direct UI access to native secrets, database, shell, or arbitrary filesystem;
 - no required local inference runtime;
 - no required second backend;
-- no first-alpha Delegate/tool execution.
+- no first-alpha Delegate/tool execution;
+- no first-alpha competing advanced memory subsystem.
 
-Future adapters and bounded tools may extend these seams only when authorized by later product/architecture decisions.
+Future adapters, governed-memory integration, and bounded tools may extend these seams only when authorized by later product/architecture decisions.
