@@ -4,6 +4,7 @@ version = "0.0.1"
 description = "B.O.B. | Better Organized Brain"
 authors = ["Kevin Knapp"]
 edition = "2021"
+rust-version = "1.88"
 
 [lib]
 name = "bob_lib"
