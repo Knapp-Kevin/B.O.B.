@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs,
-    path::{Path, PathBuf},
+    path::Path,
     sync::Mutex,
     time::Duration,
 };
@@ -293,6 +293,12 @@ fn quick_check(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
+fn quick_check_path(path: &Path) -> Result<()> {
+    let connection = Connection::open(path)
+        .with_context(|| format!("open recovery snapshot at {}", path.display()))?;
+    quick_check(&connection)
+}
+
 fn create_pre_migration_safety_copy(connection: &Connection, db_path: &Path) -> Result<()> {
     let parent = db_path
         .parent()
@@ -300,24 +306,31 @@ fn create_pre_migration_safety_copy(connection: &Connection, db_path: &Path) -> 
     let recovery_dir = parent.join("recovery");
     fs::create_dir_all(&recovery_dir).context("create recovery directory")?;
 
+    let pending = recovery_dir.join("bob-pre-migration-pending.sqlite3");
     let newest = recovery_dir.join("bob-pre-migration-1.sqlite3");
     let older = recovery_dir.join("bob-pre-migration-2.sqlite3");
+
+    if pending.exists() {
+        fs::remove_file(&pending).context("remove stale pending recovery snapshot")?;
+    }
+
+    let target = path_for_sqlite(&pending)?;
+    connection
+        .execute("VACUUM INTO ?1", params![target])
+        .context("create SQLite-consistent pending pre-migration safety copy")?;
+    quick_check_path(&pending).context("verify pending pre-migration safety copy")?;
 
     if older.exists() {
         fs::remove_file(&older).context("remove oldest pre-migration safety copy")?;
     }
     if newest.exists() {
-        fs::rename(&newest, &older).context("rotate pre-migration safety copies")?;
+        fs::rename(&newest, &older).context("rotate newest pre-migration safety copy")?;
     }
-
-    let target = path_for_sqlite(&newest)?;
-    connection
-        .execute("VACUUM INTO ?1", params![target])
-        .context("create SQLite-consistent pre-migration safety copy")?;
+    fs::rename(&pending, &newest).context("promote verified pre-migration safety copy")?;
     Ok(())
 }
 
-fn path_for_sqlite(path: &PathBuf) -> Result<String> {
+fn path_for_sqlite(path: &Path) -> Result<String> {
     path.to_str()
         .map(ToOwned::to_owned)
         .ok_or_else(|| anyhow!("SQLite backup path is not valid Unicode"))
