@@ -18,11 +18,13 @@ Read, in order:
 4. `docs/PRODUCT.md`
 5. `docs/ARCHITECTURE.md`
 6. `docs/DESIGN.md` when user-facing behavior is involved
-7. the governing PRD, RFC, ADR, implementation-plan sections, and owning issue for the change
+7. the governing PRD, RFC, ADR, implementation-plan sections, owning issue, and current active-work claims for the change
 
 The active tree is authoritative. Historical implementation is preserved on `archive/pre-revival-cleanup-2026-08-19` and must not be treated as current architecture unless a governing record explicitly brings a concept forward.
 
-When an active Wayfinder map intentionally changes a destination-specific requirement, explicit owner dispositions in resolved Wayfinder tickets govern that map destination until binding documentation is reconciled. Treat conflicts as stale-document debt, not permission to reopen a settled decision silently. The convergence audit in `docs/governance/WAYFINDER.md` must pass before implementation tickets become authoritative.
+When an active Wayfinder map intentionally changes a destination-specific requirement, explicit owner dispositions in resolved Wayfinder tickets govern that map destination until binding documentation is reconciled. Treat conflicts as stale-document debt, not permission to reopen a settled decision silently.
+
+Full Wayfinder convergence is required before declaring the map complete or treating its final synthesized waypoint specification as fully reconciled authority. It is **not** a blanket freeze on implementation whose required decisions are already settled. Safe disjoint tracer bullets, review, validation, security/privacy hardening, packaging/readiness work, and blocker removal may proceed while unrelated consequential decisions remain open, provided the work does not depend on those unresolved choices or conflict with an active implementation claim.
 
 ## Non-negotiable boundaries
 
@@ -53,9 +55,9 @@ Use the smallest record set that makes the change traceable:
 | Durable architectural decision | ADR |
 | Routine bug, test, copy, or dependency maintenance | PR only |
 
-A record marked `Proposed` is not permission to pretend an unresolved decision is settled. If implementation depends on it, resolve the decision in the governing review first.
+A record marked `Proposed` is not permission to pretend an unresolved consequential decision is settled. If implementation depends on it, resolve that decision first.
 
-When Wayfinder is active, its resolved decision tickets identify what must be reconciled into PRDs/RFCs/ADRs before the implementation handoff. A decision ticket is not a permanent substitute for the repository records required by this table.
+When Wayfinder is active, resolved decision tickets identify what must be reconciled into PRDs/RFCs/ADRs. A decision ticket is not a permanent substitute for the repository records required by this table.
 
 ## Engineering discipline
 
@@ -69,12 +71,13 @@ When Wayfinder is active, its resolved decision tickets identify what must be re
 - Do not silently change provider, runtime, model, or cost class where that change materially affects user intent, privacy, or billing.
 - Preserve B.O.B. conversation identity when the inference backend changes.
 - Update documentation in the same change that makes a documented statement true or false.
+- Before starting a slice, inspect current active implementation claims and open PRs; do not duplicate overlapping work.
 
 ## Validation responsibility
 
 GitHub Actions and required CI gates are intentionally minimal for this small project. The implementing developer or coding agent owns validation before requesting review.
 
-Run the checks that are relevant to the change, such as builds, unit tests, linting, type checks, targeted integration tests, and manual UI validation. Do not invent checks merely to fill a template. A pull request must state exactly what was run, what passed, what was not run, and why.
+Run the checks that are relevant to the change, such as builds, unit tests, linting, type checks, targeted integration tests, restart/recovery checks, packaging checks, and manual/rendered UI validation. Do not invent checks merely to fill a template. A pull request must state exactly what was run, what passed, what was not run, and why.
 
 Repository CI is a safety net when present, not a substitute for implementation-time validation.
 
@@ -82,7 +85,7 @@ Repository CI is a safety net when present, not a substitute for implementation-
 
 The repository root is intentionally sparse. Do not place implementation experiments, generated inventories, model artifacts, temporary scripts, screenshots, research dumps, or historical copies in the root.
 
-Expected root entries are limited to core repository surfaces such as `README.md`, `AGENTS.md`, `LICENSE`, `.gitignore`, `.github/`, `docs/`, and the eventual active application directories/configuration required to build the revived product.
+Expected root entries are limited to core repository surfaces such as `README.md`, `AGENTS.md`, `LICENSE`, `.gitignore`, `.github/`, `docs/`, and active application directories/configuration required to build the revived product.
 
 Git history and the named archive branch are the archive. Do not recreate a museum in `master`.
 
@@ -95,6 +98,7 @@ A material pull request must state:
 - governing PRD/RFC/ADR and Wayfinder references when applicable;
 - architecture, data, authority, security, and inference-cost impact;
 - validation performed and evidence obtained;
-- documentation changed with the behavior.
+- documentation changed with the behavior;
+- active-work coordination when another implementation slice is in flight.
 
 No AI attribution, generated-by footer, Co-Authored-By marker, or agent branding is required in repository artifacts.
