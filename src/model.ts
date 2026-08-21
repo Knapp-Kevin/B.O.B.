@@ -20,6 +20,16 @@ export interface PersistentWorkState {
   handoff: HandoffSnapshot | null;
 }
 
+export interface PlanProjection {
+  nextId: string | null;
+  focusIds: string[];
+}
+
+export interface ReplanResult {
+  workState: PersistentWorkState;
+  plan: PlanProjection;
+}
+
 export interface GeminiCredentialStatus {
   configured: boolean;
   validation: GeminiValidationState;
@@ -46,6 +56,7 @@ export interface AppState {
   route: Route;
   reduced: boolean;
   activeId: string;
+  focusIds: string[];
   filter: "all" | ItemKind;
   items: WorkItem[];
   chat: ChatMessage[];
@@ -76,6 +87,7 @@ export const state: AppState = {
   route: "today",
   reduced: false,
   activeId: "reply",
+  focusIds: [],
   filter: "all",
   items: seedItems,
   chat: [{ author: "bob", text: "Give me the messy version. I’ll help you find the next useful move." }],
@@ -104,8 +116,26 @@ export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
   return true;
 };
 
+export const applyPlanProjection = (plan: PlanProjection) => {
+  state.focusIds = plan.focusIds.filter((id) => state.items.some((item) => item.id === id));
+  if (plan.nextId && state.items.some((item) => item.id === plan.nextId)) state.activeId = plan.nextId;
+};
+
 export const activeItem = () => state.items.find((item) => item.id === state.activeId) ?? state.items.find((item) => item.status === "planned") ?? state.items[0]!;
-export const focusItems = () => ["outline", "client", "workout"].map((id) => state.items.find((item) => item.id === id)).filter((item): item is WorkItem => Boolean(item));
+
+export const focusItems = () => {
+  const projected = state.focusIds
+    .map((id) => state.items.find((item) => item.id === id))
+    .filter((item): item is WorkItem => Boolean(item));
+  if (projected.length) return projected.slice(0, 3);
+
+  const eligible = state.items.filter((item) => item.status === "doing" || item.status === "planned");
+  const active = eligible.find((item) => item.id === state.activeId);
+  return [active, ...eligible.filter((item) => item.id !== active?.id)]
+    .filter((item): item is WorkItem => Boolean(item))
+    .slice(0, 3);
+};
+
 export const escapeHtml = (value: string) => value.replace(/[&<>'\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '\"': "&quot;" })[character]!);
 
 let toastTimer: number | undefined;
