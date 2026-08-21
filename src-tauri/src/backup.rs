@@ -414,6 +414,24 @@ mod tests {
     }
 
     #[test]
+    fn rejects_corrupt_non_sqlite_candidate_without_mutating_canonical_state() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let canonical = directory.path().join(DATABASE_NAME);
+        create_bob_v3_database(&canonical)?;
+        let store = Store::open(directory.path())?;
+        let expected = store.load()?;
+
+        let backup_dir = directory.path().join(USER_BACKUP_DIR);
+        fs::create_dir_all(&backup_dir)?;
+        let candidate = backup_dir.join("bob-backup-corrupt.sqlite3");
+        fs::write(&candidate, b"this is not a sqlite database")?;
+
+        assert!(restore_user_backup(directory.path(), &store, &candidate).is_err());
+        assert_eq!(store.load()?, expected);
+        Ok(())
+    }
+
+    #[test]
     fn rejects_newer_schema_without_mutating_canonical_state() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let canonical = directory.path().join(DATABASE_NAME);
