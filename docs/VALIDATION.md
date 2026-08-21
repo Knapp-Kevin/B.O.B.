@@ -67,7 +67,7 @@ Source review of rename/replacement code is useful but does not replace native W
 | --- | --- |
 | Today | next action, completion, defer, focus list, capture |
 | Inbox | capture, filtering, promote-to-next-action, organize/preview |
-| Chat | deterministic behavior; bounded live inference only when its provider-policy/privacy gate is cleared |
+| Chat | deterministic behavior; bounded live inference only after provider-purpose/data-use acknowledgement |
 | Preview-before-apply | proposal can be dismissed without mutation; apply changes only the previewed state |
 | Accessibility | keyboard reachability, visible focus, larger text, reduced motion, readable hierarchy at minimum supported window |
 | Persistence | mutation survives full quit/restart |
@@ -77,7 +77,7 @@ Source review of rename/replacement code is useful but does not replace native W
 | Rendered desktop | Today, Inbox, Chat, Settings at normal and minimum supported window sizes |
 | Packaging | install, launch, uninstall Windows 11 x64 NSIS package |
 
-## Credential/privacy evidence
+## Credential/privacy/provider evidence
 
 Never use a real production credential in screenshots, fixtures, issue bodies, test output, or logs.
 
@@ -90,7 +90,17 @@ set -> restart -> status/read/validate -> failed replace preserves old credentia
 
 The raw secret must never appear in SQLite, portable exports, ordinary frontend state, or a command that reads it back to the UI.
 
-Issue #57 currently blocks only the activation/claim of context-bearing Gemini inference until the current provider-use boundary is reconciled. Credential storage and validation may still be tested independently.
+Before claiming context-bearing Gemini Developer API Free inference as accepted, native/rendered evidence must also prove:
+
+1. the user is told that this unpaid provider path is for professional or business use rather than general consumer use;
+2. the user is told that unpaid-service content and generated responses may be used by Google for product/model improvement and may be reviewed by humans;
+3. the user is explicitly told not to send sensitive, confidential, or personal information through this unpaid path;
+4. no context-bearing inference is sent until the user affirmatively acknowledges that boundary;
+5. declining or withholding acknowledgement leaves deterministic B.O.B. fully usable;
+6. quota/auth/provider failure never silently transitions to paid or different inference;
+7. the current Gemini API terms and regional/billing applicability are rechecked at release validation time.
+
+The governing provider boundary is in `docs/governance/AI_COST_AND_PROVIDER_POLICY.md`; issue #57 records the 2026-08-21 reconciliation of the current Gemini API Additional Terms.
 
 ## Packaging
 
