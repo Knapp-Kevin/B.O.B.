@@ -1,13 +1,7 @@
 use anyhow::{anyhow, bail, Context, Result};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs,
-    path::Path,
-    sync::Mutex,
-    time::Duration,
-};
+use std::{collections::HashSet, fs, path::Path, sync::Mutex, time::Duration};
 use tauri::State;
 
 const SCHEMA_VERSION: i64 = 3;
@@ -54,8 +48,12 @@ pub struct Store {
 
 impl Store {
     pub fn open(app_data_dir: &Path) -> Result<Self> {
-        fs::create_dir_all(app_data_dir)
-            .with_context(|| format!("create B.O.B. app-data directory at {}", app_data_dir.display()))?;
+        fs::create_dir_all(app_data_dir).with_context(|| {
+            format!(
+                "create B.O.B. app-data directory at {}",
+                app_data_dir.display()
+            )
+        })?;
 
         let db_path = app_data_dir.join(DATABASE_NAME);
         let existed_before_open = db_path.exists();
@@ -312,7 +310,10 @@ fn validate_work_state(state: &WorkState) -> Result<()> {
         ) {
             bail!("work item {} has an invalid status", item.id);
         }
-        if item.estimate.is_some_and(|estimate| estimate <= 0 || estimate > 10_080) {
+        if item
+            .estimate
+            .is_some_and(|estimate| estimate <= 0 || estimate > 10_080)
+        {
             bail!("work item {} has an invalid estimate", item.id);
         }
         if item.due.as_ref().is_some_and(|due| due.len() > 200) {
@@ -341,7 +342,11 @@ fn validate_work_state(state: &WorkState) -> Result<()> {
     Ok(())
 }
 
-fn run_migrations(connection: &mut Connection, db_path: &Path, existed_before_open: bool) -> Result<()> {
+fn run_migrations(
+    connection: &mut Connection,
+    db_path: &Path,
+    existed_before_open: bool,
+) -> Result<()> {
     let initial_version = user_version(connection)?;
     if initial_version > SCHEMA_VERSION {
         bail!(
@@ -533,10 +538,7 @@ mod tests {
             reduced_motion: true,
         };
 
-        assert_eq!(
-            store.save_accessibility_preferences(expected)?,
-            expected
-        );
+        assert_eq!(store.save_accessibility_preferences(expected)?, expected);
         assert_eq!(store.load_accessibility_preferences()?, expected);
         Ok(())
     }
@@ -612,7 +614,8 @@ mod tests {
             .join("bob-pre-migration-1.sqlite3");
         assert!(safety_copy.exists());
         let copy = Connection::open(safety_copy)?;
-        let marker: String = copy.query_row("SELECT value FROM legacy_marker", [], |row| row.get(0))?;
+        let marker: String =
+            copy.query_row("SELECT value FROM legacy_marker", [], |row| row.get(0))?;
         assert_eq!(marker, "keep-me");
         Ok(())
     }

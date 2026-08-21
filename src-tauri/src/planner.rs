@@ -30,7 +30,11 @@ pub fn project_remaining_work(state: &WorkState) -> PlanProjection {
         .collect::<Vec<_>>();
 
     candidates.sort_by_key(|(index, item)| {
-        let active_rank = if active_id == Some(item.id.as_str()) { 0 } else { 1 };
+        let active_rank = if active_id == Some(item.id.as_str()) {
+            0
+        } else {
+            1
+        };
         let status_rank = if item.status == "doing" { 0 } else { 1 };
         let today_rank = if item
             .due
