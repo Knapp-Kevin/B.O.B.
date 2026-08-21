@@ -87,15 +87,17 @@ B.O.B. Chat can:
 
 ### Settings
 
-Settings owns:
+Settings owns user-facing configuration, including:
 
-- inference/runtime availability and defaults;
-- cost and billing-class policy;
-- credential and authentication state;
+- availability and status for inference/runtime capabilities that actually exist;
+- cost, billing-class, privacy, and provider-use policy controls where relevant;
+- credential and authentication state through provider-neutral product boundaries;
 - local inference configuration when local adapters are supported;
 - accessibility and visual preferences;
 - local data location, export, backup, and reset;
-- optional advanced controls.
+- optional advanced provider controls.
+
+Settings must not turn provider plumbing, product governance, or development-status exposition into B.O.B.'s ordinary product identity. API-key integrations may remain available as advanced options, but unresolved or unimplemented provider paths must not appear as fake controls.
 
 ## ADHD-friendly interaction requirements
 
@@ -136,18 +138,21 @@ The user explicitly grants **B.O.B.** bounded authority for a defined task. B.O.
 
 Delegate/tool execution is a future capability relative to the first runnable alpha and does not block that alpha's Assist-mode usefulness.
 
-## Cost model
+## Cost and provider model
 
-The governing policy is zero-surprise inference cost:
+The governing policy is zero-surprise inference cost and provider independence:
 
-1. prefer configured zero-cost or already-included inference paths that fit the active product boundary;
-2. use local inference when supported and intentionally configured;
+1. prefer configured zero-cost, already-included/account-backed, or intentionally local inference paths whose current terms and entitlement fit the requested use;
+2. classify billing independently from authentication method;
 3. use metered API inference only when explicitly enabled by the user;
-4. never silently fail over into separately billed inference.
+4. never silently fail over into separately billed inference or a materially different provider/runtime;
+5. keep deterministic B.O.B. useful when no allowed inference capability is available.
 
-For the first runnable alpha, the resolved Wayfinder route requires **Gemini Developer API Free** as the sole inference backend. A second backend, subscription-backed adapters, and local inference are later expansion slices rather than alpha acceptance requirements.
+The first runnable alpha waypoint used **Gemini Developer API Free** as the sole required inference backend to prove the inference, policy, credential, and fail-closed seams. That waypoint decision is historical/current implementation evidence, not B.O.B.'s long-term provider destination.
 
-The Gemini Free capability is narrower than B.O.B.'s overall product boundary. Under the current Gemini API Additional Terms, context-bearing Gemini Free inference is enabled only for professional/business use after the user acknowledges the applicable unpaid-service data-use boundary, including that submitted content/responses may be used for product/model improvement and may be reviewed by humans, and that sensitive, confidential, or personal information must not be submitted. If that boundary is not accepted, B.O.B. continues deterministically without sending context to Gemini. Broader personal/consumer inference requires a later permitted provider path or authoritative terms change.
+Current accepted direction is provider-independent: simple account-backed or local inference should become the normal onboarding path where an official, third-party-compatible route exists; existing API-key integrations such as Gemini Developer API may remain available as advanced optional adapters; and no provider is allowed to become B.O.B.'s architectural landlord. Claude/Codex account-backed paths and local inference remain separately governed expansion work until their concrete supported contracts are accepted and implemented.
+
+The existing Gemini Free capability remains narrower than B.O.B.'s overall product boundary. Under the current Gemini API Additional Terms, context-bearing Gemini Free inference is enabled only for professional/business use after the user acknowledges the applicable unpaid-service data-use boundary, including that submitted content/responses may be used for product/model improvement and may be reviewed by humans, and that sensitive, confidential, or personal information must not be submitted. If that boundary is not accepted, B.O.B. continues deterministically without sending context to Gemini.
 
 ## Canonical state
 
@@ -200,4 +205,4 @@ The first runnable alpha is successful when a Windows 11 x64 user can:
 - understand provider/privacy/cost state without being forced to manage a provider dashboard;
 - verify the alpha through the resolved local validation, recovery, accessibility, and Windows packaging evidence.
 
-A second runtime is intentionally deferred to a later tracer slice and is not evidence required for first-alpha completion.
+A second runtime is intentionally deferred from the first-alpha acceptance bar. Continued development beyond that waypoint follows the provider-independent and local-runtime Wayfinder destinations rather than preserving Gemini as the default product identity.
