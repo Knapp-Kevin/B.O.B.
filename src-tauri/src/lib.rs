@@ -1,5 +1,6 @@
 mod gemini;
 mod planner;
+mod proposals;
 mod secrets;
 mod state;
 
@@ -23,6 +24,7 @@ pub fn run() {
             state::save_work_state,
             planner::plan_remaining_work,
             planner::replan_remaining_work,
+            proposals::apply_next_action_proposal,
             gemini::gemini_credential_status,
             gemini::configure_gemini_credential,
             gemini::remove_gemini_credential
