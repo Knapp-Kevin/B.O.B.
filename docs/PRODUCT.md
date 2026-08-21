@@ -122,6 +122,8 @@ Without an available LLM/runtime, B.O.B. must still support capture, task state,
 
 Model output may inform or propose application changes, but application state changes are executed by B.O.B. after validation and according to the user's authority settings.
 
+Provider-specific inference is available only when its current terms, privacy/data-use boundary, regional availability, and billing classification fit the requested use. A provider restriction on one inference path does not redefine B.O.B.'s local deterministic product as a whole.
+
 ## Authority modes
 
 ### Assist
@@ -144,6 +146,8 @@ The governing policy is zero-surprise inference cost:
 4. never silently fail over into separately billed inference.
 
 For the first runnable alpha, the resolved Wayfinder route requires **Gemini Developer API Free** as the sole inference backend. A second backend, subscription-backed adapters, and local inference are later expansion slices rather than alpha acceptance requirements.
+
+The Gemini Free capability is narrower than B.O.B.'s overall product boundary. Under the current Gemini API Additional Terms, context-bearing Gemini Free inference is enabled only for professional/business use after the user acknowledges the applicable unpaid-service data-use boundary, including that submitted content/responses may be used for product/model improvement and may be reviewed by humans, and that sensitive, confidential, or personal information must not be submitted. If that boundary is not accepted, B.O.B. continues deterministically without sending context to Gemini. Broader personal/consumer inference requires a later permitted provider path or authoritative terms change.
 
 ## Canonical state
 
@@ -187,8 +191,10 @@ The first runnable alpha is successful when a Windows 11 x64 user can:
 - capture and manage work through Today and Inbox;
 - plan and replan a realistic day and recover after interruption;
 - preserve canonical local state across restart using the resolved persistence/recovery contract;
-- complete the guided Gemini Developer API Free credential flow and converse with B.O.B. through that real inference path;
-- receive organization, breakdown, reorientation, resume/handoff, and lightweight decision-facilitation help through B.O.B. Chat;
+- complete the guided Gemini Developer API Free credential flow;
+- when using the accepted professional/business Gemini Free boundary, acknowledge the provider/data-use disclosure before any context-bearing request and converse with B.O.B. through that real inference path;
+- decline that provider boundary and still retain deterministic B.O.B. planning, capture, persistence, and recovery behavior without context-bearing Gemini calls;
+- receive organization, breakdown, reorientation, resume/handoff, and lightweight decision-facilitation help through B.O.B. Chat when an allowed inference path is active;
 - preview important proposed state changes before they are applied;
 - continue using deterministic planning behavior when inference is unavailable;
 - understand provider/privacy/cost state without being forced to manage a provider dashboard;
