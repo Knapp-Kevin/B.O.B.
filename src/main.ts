@@ -2,6 +2,7 @@ import "./styles.css";
 import { render } from "./controller";
 import { applyAccessibilityPreferences, applyPlanProjection, hydratePersistentWorkState, state } from "./model";
 import { loadAccessibilityPreferences, loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork } from "./native";
+import { installAccessibilityPreferencePersistence } from "./preferences";
 
 async function bootstrap() {
   try {
@@ -15,6 +16,7 @@ async function bootstrap() {
     console.error("Failed to load durable B.O.B. local state", error);
   }
 
+  installAccessibilityPreferencePersistence();
   render();
 
   void planRemainingWork()
