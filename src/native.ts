@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { GeminiCredentialStatus, PersistentWorkState, PlanProjection, ReplanResult } from "./model";
+import type { GeminiCredentialStatus, ItemKind, PersistentWorkState, PlanProjection, ReplanResult } from "./model";
 
 const isTauriRuntime = () => "__TAURI_INTERNALS__" in window;
 const browserGeminiStatus: GeminiCredentialStatus = { configured: false, validation: "notConfigured" };
@@ -22,6 +22,11 @@ export async function replanRemainingWork(): Promise<ReplanResult | null> {
 export async function captureItem(title: string): Promise<ReplanResult | null> {
   if (!isTauriRuntime()) return null;
   return invoke<ReplanResult>("capture_item", { title });
+}
+
+export async function classifyInboxItem(itemId: string, kind: ItemKind): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("classify_inbox_item", { itemId, kind });
 }
 
 export async function startCurrentWork(): Promise<ReplanResult | null> {
