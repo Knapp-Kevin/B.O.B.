@@ -340,7 +340,10 @@ fn classify_inference_status(status: StatusCode) -> GeminiInferenceState {
 pub async fn gemini_credential_status(
     credentials: State<'_, GeminiCredentials>,
 ) -> std::result::Result<GeminiCredentialStatus, String> {
-    credentials.status().await.map_err(|error| error.to_string())
+    credentials
+        .status()
+        .await
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
