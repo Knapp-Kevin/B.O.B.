@@ -1,4 +1,5 @@
 mod agent;
+mod backup;
 mod export;
 mod gemini;
 mod planner;
@@ -40,6 +41,8 @@ pub fn run() {
             work::clear_handoff,
             proposals::apply_next_action_proposal,
             agent::bob_assist,
+            backup::create_user_backup_command,
+            backup::restore_user_backup_command,
             export::export_portable_state,
             gemini::gemini_credential_status,
             gemini::configure_gemini_credential,
