@@ -29,6 +29,11 @@ export async function applyNextActionProposal(targetId: string): Promise<ReplanR
   return invoke<ReplanResult>("apply_next_action_proposal", { targetId });
 }
 
+export async function assistWithBob(input: string): Promise<string | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<string>("bob_assist", { input });
+}
+
 export async function loadGeminiCredentialStatus(): Promise<GeminiCredentialStatus> {
   if (!isTauriRuntime()) return browserGeminiStatus;
   return invoke<GeminiCredentialStatus>("gemini_credential_status");
