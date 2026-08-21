@@ -105,6 +105,7 @@ fn stage_user_backup_candidate(app_data_dir: &Path, candidate: &Path) -> Result<
     if !table_exists(&source, "work_items")? || !table_exists(&source, "app_state")? {
         bail!("restore candidate is not a recognized B.O.B. canonical-state backup");
     }
+    require_app_state_singleton(&source)?;
 
     let validation_root = app_data_dir.join(RESTORE_VALIDATION_DIR);
     fs::create_dir_all(&validation_root).with_context(|| {
@@ -194,6 +195,20 @@ fn table_exists(connection: &Connection, table: &str) -> Result<bool> {
         )
         .context("inspect restore-candidate schema")?;
     Ok(count == 1)
+}
+
+fn require_app_state_singleton(connection: &Connection) -> Result<()> {
+    let count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM app_state WHERE singleton = 1",
+            [],
+            |row| row.get(0),
+        )
+        .context("inspect required restore-candidate app_state singleton")?;
+    if count != 1 {
+        bail!("restore candidate is missing required B.O.B. app_state singleton row");
+    }
+    Ok(())
 }
 
 fn unique_stamp() -> Result<u128> {
@@ -428,6 +443,29 @@ mod tests {
 
         assert!(restore_user_backup(directory.path(), &store, &candidate).is_err());
         assert_eq!(store.load()?, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_missing_app_state_singleton_without_mutating_canonical_state() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let canonical = directory.path().join(DATABASE_NAME);
+        create_bob_v3_database(&canonical)?;
+        let store = Store::open(directory.path())?;
+        let expected_state = store.load()?;
+        let expected_preferences = store.load_accessibility_preferences()?;
+
+        let backup_dir = directory.path().join(USER_BACKUP_DIR);
+        fs::create_dir_all(&backup_dir)?;
+        let candidate = backup_dir.join("bob-backup-missing-app-state.sqlite3");
+        create_bob_v3_database(&candidate)?;
+        let malformed = Connection::open(&candidate)?;
+        malformed.execute("DELETE FROM app_state WHERE singleton = 1", [])?;
+        drop(malformed);
+
+        assert!(restore_user_backup(directory.path(), &store, &candidate).is_err());
+        assert_eq!(store.load()?, expected_state);
+        assert_eq!(store.load_accessibility_preferences()?, expected_preferences);
         Ok(())
     }
 
