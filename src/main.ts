@@ -1,14 +1,18 @@
 import "./styles.css";
 import { render } from "./controller";
-import { applyPlanProjection, hydratePersistentWorkState, state } from "./model";
-import { loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork } from "./native";
+import { applyAccessibilityPreferences, applyPlanProjection, hydratePersistentWorkState, state } from "./model";
+import { loadAccessibilityPreferences, loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork } from "./native";
 
 async function bootstrap() {
   try {
-    const durable = await loadPersistentWorkState();
+    const [durable, preferences] = await Promise.all([
+      loadPersistentWorkState(),
+      loadAccessibilityPreferences()
+    ]);
     if (durable) hydratePersistentWorkState(durable);
+    if (preferences) applyAccessibilityPreferences(preferences);
   } catch (error) {
-    console.error("Failed to load durable B.O.B. work state", error);
+    console.error("Failed to load durable B.O.B. local state", error);
   }
 
   render();
