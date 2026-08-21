@@ -1,4 +1,7 @@
-use crate::{planner::{project_remaining_work, ReplanResult}, state::{Store, WorkState}};
+use crate::{
+    planner::{project_remaining_work, ReplanResult},
+    state::{Store, WorkState},
+};
 use anyhow::{bail, Result};
 use tauri::State;
 
@@ -87,11 +90,21 @@ mod tests {
 
         assert_eq!(state.active_id.as_deref(), Some("target"));
         assert_eq!(
-            state.items.iter().find(|item| item.id == "target").unwrap().status,
+            state
+                .items
+                .iter()
+                .find(|item| item.id == "target")
+                .unwrap()
+                .status,
             "planned"
         );
         assert_eq!(
-            state.items.iter().find(|item| item.id == "current").unwrap().status,
+            state
+                .items
+                .iter()
+                .find(|item| item.id == "current")
+                .unwrap()
+                .status,
             "planned"
         );
         Ok(())
