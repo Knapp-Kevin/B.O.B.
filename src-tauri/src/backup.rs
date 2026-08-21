@@ -1,5 +1,5 @@
 use anyhow::{anyhow, bail, Context, Result};
-use rusqlite::{Connection, MAIN_DB};
+use rusqlite::{Connection, OpenFlags, MAIN_DB};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -26,13 +26,13 @@ pub fn create_user_backup(app_data_dir: &Path) -> Result<PathBuf> {
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .context("system clock is before Unix epoch")?
-        .as_millis();
+        .as_nanos();
     let pending = backup_dir.join(format!(".bob-backup-{stamp}.pending.sqlite3"));
     let completed = backup_dir.join(format!("bob-backup-{stamp}.sqlite3"));
 
     let result = (|| {
-        let source = Connection::open(&source_path)
-            .with_context(|| format!("open canonical B.O.B. database at {}", source_path.display()))?;
+        let source = Connection::open_with_flags(&source_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .with_context(|| format!("open canonical B.O.B. database read-only at {}", source_path.display()))?;
         source
             .backup(MAIN_DB, &pending, None)
             .context("create SQLite-consistent user backup")?;
@@ -49,8 +49,8 @@ pub fn create_user_backup(app_data_dir: &Path) -> Result<PathBuf> {
 }
 
 fn quick_check_path(path: &Path) -> Result<()> {
-    let connection = Connection::open(path)
-        .with_context(|| format!("open SQLite snapshot at {}", path.display()))?;
+    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .with_context(|| format!("open SQLite snapshot read-only at {}", path.display()))?;
     let result: String = connection
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .context("run SQLite quick_check")?;
@@ -87,9 +87,10 @@ mod tests {
         drop(source);
 
         let backup_path = create_user_backup(directory.path())?;
+        let expected_dir = directory.path().join(USER_BACKUP_DIR);
 
         assert!(backup_path.is_file());
-        assert_eq!(backup_path.parent(), Some(directory.path().join(USER_BACKUP_DIR).as_path()));
+        assert_eq!(backup_path.parent(), Some(expected_dir.as_path()));
         assert!(!backup_path
             .file_name()
             .and_then(|name| name.to_str())
