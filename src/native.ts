@@ -34,6 +34,11 @@ export async function assistWithBob(input: string): Promise<string | null> {
   return invoke<string>("bob_assist", { input });
 }
 
+export async function exportPortableState(): Promise<string | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<string>("export_portable_state");
+}
+
 export async function loadGeminiCredentialStatus(): Promise<GeminiCredentialStatus> {
   if (!isTauriRuntime()) return browserGeminiStatus;
   return invoke<GeminiCredentialStatus>("gemini_credential_status");

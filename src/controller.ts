@@ -1,5 +1,5 @@
 import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
-import { applyNextActionProposal, assistWithBob, configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
+import { applyNextActionProposal, assistWithBob, configureGeminiCredential, exportPortableState, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -75,6 +75,16 @@ function pushConversation(text: string) {
       state.chat.push({ author: "bob", text: replyFor(text) });
     })
     .finally(render);
+}
+
+function downloadPortableExport(contents: string) {
+  const blob = new Blob([contents], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "bob-portable-export-v1.json";
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function openSetup(step: SetupStep = state.geminiStaged ? 3 : 1) {
@@ -228,6 +238,22 @@ function bindEvents() {
     state.pendingProposal = undefined;
     showToast("Proposal dismissed. Nothing changed.");
     render();
+  });
+
+  document.querySelector("#export-data")?.addEventListener("click", () => {
+    void exportPortableState()
+      .then((contents) => {
+        if (!contents) {
+          showToast("Portable export is available in the native B.O.B. app.");
+          return;
+        }
+        downloadPortableExport(contents);
+        showToast("Portable export created. Protected credentials are not included.");
+      })
+      .catch((error) => {
+        console.error("Failed to create B.O.B. portable export", error);
+        showToast("B.O.B. could not create the portable export. Canonical state was not changed.");
+      });
   });
 
   document.querySelector("#setup")?.addEventListener("click", () => openSetup());
