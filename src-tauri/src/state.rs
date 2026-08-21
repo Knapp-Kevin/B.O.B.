@@ -221,9 +221,12 @@ impl Store {
             .and_then(|_| load_accessibility_preferences_from_connection(&connection).map(|_| ()));
 
         if let Err(restore_error) = restore_result {
-            let rollback_result = restore_connection_from_snapshot(&mut connection, recovery_snapshot)
-                .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
-                .and_then(|_| load_accessibility_preferences_from_connection(&connection).map(|_| ()));
+            let rollback_result =
+                restore_connection_from_snapshot(&mut connection, recovery_snapshot)
+                    .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
+                    .and_then(|_| {
+                        load_accessibility_preferences_from_connection(&connection).map(|_| ())
+                    });
 
             return match rollback_result {
                 Ok(()) => Err(restore_error).context(
@@ -348,11 +351,7 @@ fn load_accessibility_preferences_from_connection(
 
 fn restore_connection_from_snapshot(connection: &mut Connection, snapshot: &Path) -> Result<()> {
     connection
-        .restore(
-            MAIN_DB,
-            snapshot,
-            None::<fn(rusqlite::backup::Progress)>,
-        )
+        .restore(MAIN_DB, snapshot, None::<fn(rusqlite::backup::Progress)>)
         .with_context(|| format!("restore SQLite snapshot from {}", snapshot.display()))?;
     connection
         .pragma_update(None, "foreign_keys", "ON")

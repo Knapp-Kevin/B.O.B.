@@ -60,7 +60,14 @@ pub fn create_user_backup(app_data_dir: &Path) -> Result<PathBuf> {
 }
 
 /// Validate a candidate user backup without mutating canonical state.
-pub fn validate_user_backup_candidate(app_data_dir: &Path, candidate: &Path) -> Result<()> {
+///
+/// This has no non-test caller yet: `restore_user_backup` stages the candidate itself, and this
+/// slice deliberately does not add a separate validate command to the IPC surface (#69 keeps the
+/// interface narrow). It is scoped to tests until the restore UX slice needs a preview step, so
+/// that `cargo clippy --all-targets -- -D warnings` stays green without suppressing dead-code
+/// detection for the module.
+#[cfg(test)]
+fn validate_user_backup_candidate(app_data_dir: &Path, candidate: &Path) -> Result<()> {
     let staged = stage_user_backup_candidate(app_data_dir, candidate)?;
     cleanup_staged_restore(staged)
 }
@@ -95,11 +102,19 @@ pub fn restore_user_backup(app_data_dir: &Path, store: &Store, candidate: &Path)
 
 fn stage_user_backup_candidate(app_data_dir: &Path, candidate: &Path) -> Result<StagedRestore> {
     if !candidate.is_file() {
-        bail!("restore candidate does not exist at {}", candidate.display());
+        bail!(
+            "restore candidate does not exist at {}",
+            candidate.display()
+        );
     }
 
     let source = Connection::open_with_flags(candidate, OpenFlags::SQLITE_OPEN_READ_ONLY)
-        .with_context(|| format!("open restore candidate read-only at {}", candidate.display()))?;
+        .with_context(|| {
+            format!(
+                "open restore candidate read-only at {}",
+                candidate.display()
+            )
+        })?;
     quick_check(&source).context("verify restore-candidate SQLite integrity")?;
 
     if !table_exists(&source, "work_items")? || !table_exists(&source, "app_state")? {
@@ -236,7 +251,10 @@ fn quick_check_path(path: &Path) -> Result<()> {
 
 #[tauri::command]
 pub fn create_user_backup_command(app: AppHandle) -> std::result::Result<String, String> {
-    let app_data_dir = app.path().app_data_dir().map_err(|error| error.to_string())?;
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| error.to_string())?;
     create_user_backup(&app_data_dir)
         .and_then(|path| {
             path.to_str()
@@ -252,7 +270,10 @@ pub fn restore_user_backup_command(
     store: State<'_, Store>,
     backup_path: String,
 ) -> std::result::Result<(), String> {
-    let app_data_dir = app.path().app_data_dir().map_err(|error| error.to_string())?;
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| error.to_string())?;
     restore_user_backup(&app_data_dir, store.inner(), Path::new(&backup_path))
         .map_err(|error| error.to_string())
 }
@@ -373,7 +394,10 @@ mod tests {
         restore_user_backup(directory.path(), &store, &backup_path)?;
 
         assert_eq!(store.load()?, expected_state);
-        assert_eq!(store.load_accessibility_preferences()?, expected_preferences);
+        assert_eq!(
+            store.load_accessibility_preferences()?,
+            expected_preferences
+        );
         assert!(directory
             .path()
             .join(RECOVERY_DIR)
@@ -465,7 +489,10 @@ mod tests {
 
         assert!(restore_user_backup(directory.path(), &store, &candidate).is_err());
         assert_eq!(store.load()?, expected_state);
-        assert_eq!(store.load_accessibility_preferences()?, expected_preferences);
+        assert_eq!(
+            store.load_accessibility_preferences()?,
+            expected_preferences
+        );
         Ok(())
     }
 
@@ -527,9 +554,8 @@ mod tests {
         let backup_path = create_user_backup(directory.path())?;
         let backup = Connection::open_with_flags(&backup_path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
 
-        let mut tables = backup.prepare(
-            "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC",
-        )?;
+        let mut tables = backup
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC")?;
         let table_names = tables
             .query_map([], |row| row.get::<_, String>(0))?
             .collect::<std::result::Result<Vec<_>, _>>()?;
