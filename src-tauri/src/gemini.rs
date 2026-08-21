@@ -49,14 +49,14 @@ impl GeminiCredentialStatus {
 pub struct GeminiContextPolicy {
     pub professional_business_use_acknowledged: bool,
     pub content_confirmed_non_sensitive: bool,
-    pub free_tier_intended: bool,
+    pub free_tier_project_confirmed: bool,
 }
 
 impl GeminiContextPolicy {
     fn allows_context(self) -> bool {
         self.professional_business_use_acknowledged
             && self.content_confirmed_non_sensitive
-            && self.free_tier_intended
+            && self.free_tier_project_confirmed
     }
 }
 
@@ -401,7 +401,7 @@ mod tests {
         GeminiContextPolicy {
             professional_business_use_acknowledged: true,
             content_confirmed_non_sensitive: true,
-            free_tier_intended: true,
+            free_tier_project_confirmed: true,
         }
     }
 
@@ -419,7 +419,7 @@ mod tests {
         }
         .allows_context());
         assert!(!GeminiContextPolicy {
-            free_tier_intended: false,
+            free_tier_project_confirmed: false,
             ..allowed_policy()
         }
         .allows_context());
@@ -441,6 +441,29 @@ mod tests {
                 )
                 .await
                 .expect("policy-blocked generation should return a typed result");
+
+            assert_eq!(result.state, GeminiInferenceState::PolicyBlocked);
+            assert!(result.text.is_none());
+            assert_eq!(secrets.reads.load(Ordering::SeqCst), 0);
+        });
+    }
+
+    #[test]
+    fn missing_free_tier_project_confirmation_does_not_read_the_secret_store() {
+        tauri::async_runtime::block_on(async {
+            let secrets = Arc::new(CountingSecretStore::default());
+            let credentials = GeminiCredentials::with_secret_store(secrets.clone())
+                .expect("build Gemini credentials for test");
+            let result = credentials
+                .generate_text(
+                    "context that must remain local",
+                    GeminiContextPolicy {
+                        free_tier_project_confirmed: false,
+                        ..allowed_policy()
+                    },
+                )
+                .await
+                .expect("missing Free Tier confirmation should return a typed result");
 
             assert_eq!(result.state, GeminiInferenceState::PolicyBlocked);
             assert!(result.text.is_none());
