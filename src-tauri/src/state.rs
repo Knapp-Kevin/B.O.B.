@@ -214,16 +214,7 @@ impl Store {
         quick_check_path(&recovery_pending)
             .context("verify pending pre-restore recovery snapshot before promotion")?;
 
-        if recovery_snapshot.exists() {
-            fs::remove_file(recovery_snapshot).with_context(|| {
-                format!(
-                    "remove superseded pre-restore recovery snapshot at {}",
-                    recovery_snapshot.display()
-                )
-            })?;
-        }
-        fs::rename(&recovery_pending, recovery_snapshot)
-            .context("promote verified pre-restore recovery snapshot")?;
+        promote_verified_recovery_snapshot(&recovery_pending, recovery_snapshot)?;
 
         let restore_result = restore_connection_from_snapshot(&mut connection, prepared_snapshot)
             .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
@@ -543,6 +534,16 @@ fn quick_check_path(path: &Path) -> Result<()> {
     quick_check(&connection)
 }
 
+fn promote_verified_recovery_snapshot(pending: &Path, target: &Path) -> Result<()> {
+    fs::rename(pending, target).with_context(|| {
+        format!(
+            "promote verified pre-restore recovery snapshot from {} to {} while preserving the prior target if replacement fails",
+            pending.display(),
+            target.display()
+        )
+    })
+}
+
 fn create_pre_migration_safety_copy(connection: &Connection, db_path: &Path) -> Result<()> {
     let parent = db_path
         .parent()
@@ -642,6 +643,33 @@ mod tests {
 
         assert!(store.save(&invalid).is_err());
         assert!(store.load()?.items.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn failed_recovery_promotion_preserves_existing_snapshot() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let pending = directory.path().join("missing-pending.sqlite3");
+        let target = directory.path().join("bob-pre-restore-last.sqlite3");
+        fs::write(&target, b"known-good")?;
+
+        assert!(promote_verified_recovery_snapshot(&pending, &target).is_err());
+        assert_eq!(fs::read(&target)?, b"known-good");
+        Ok(())
+    }
+
+    #[test]
+    fn recovery_promotion_replaces_existing_snapshot_without_delete_window() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let pending = directory.path().join("pending.sqlite3");
+        let target = directory.path().join("bob-pre-restore-last.sqlite3");
+        fs::write(&pending, b"new-known-good")?;
+        fs::write(&target, b"old-known-good")?;
+
+        promote_verified_recovery_snapshot(&pending, &target)?;
+
+        assert!(!pending.exists());
+        assert_eq!(fs::read(&target)?, b"new-known-good");
         Ok(())
     }
 
