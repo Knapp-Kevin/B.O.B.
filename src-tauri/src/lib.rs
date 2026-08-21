@@ -5,6 +5,7 @@ mod planner;
 mod proposals;
 mod secrets;
 mod state;
+mod work;
 
 use tauri::Manager;
 
@@ -15,6 +16,8 @@ pub fn run() {
             let data_dir = app.path().app_data_dir()?;
             let store = state::Store::open(&data_dir)
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
+            work::normalize_store(&store)
+                .map_err(|error| std::io::Error::other(error.to_string()))?;
             let gemini = gemini::GeminiCredentials::new()
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
             app.manage(store);
@@ -23,9 +26,15 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             state::load_work_state,
-            state::save_work_state,
             planner::plan_remaining_work,
             planner::replan_remaining_work,
+            work::capture_item,
+            work::start_current_work,
+            work::defer_current_work,
+            work::toggle_task_completed,
+            work::select_next_task,
+            work::save_current_handoff,
+            work::clear_handoff,
             proposals::apply_next_action_proposal,
             agent::bob_assist,
             export::export_portable_state,
