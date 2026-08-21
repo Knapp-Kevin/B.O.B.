@@ -46,7 +46,8 @@ pub fn run() {
             export::export_portable_state,
             gemini::gemini_credential_status,
             gemini::configure_gemini_credential,
-            gemini::remove_gemini_credential
+            gemini::remove_gemini_credential,
+            gemini::generate_gemini_context
         ])
         .run(tauri::generate_context!())
         .expect("error while running B.O.B.");
