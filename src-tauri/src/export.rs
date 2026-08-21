@@ -4,7 +4,7 @@ use serde::Serialize;
 use tauri::State;
 
 const EXPORT_SCHEMA: &str = "bob.portable-export";
-const EXPORT_VERSION: u32 = 2;
+const EXPORT_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
