@@ -128,13 +128,13 @@ export const activeItem = () => state.items.find((item) => item.id === state.act
 export const focusItems = () => {
   const projected = state.focusIds
     .map((id) => state.items.find((item) => item.id === id))
-    .filter((item): item is WorkItem => Boolean(item) && item.kind === "task");
+    .filter((item): item is WorkItem => item !== undefined && item.kind === "task");
   if (projected.length) return projected.slice(0, 3);
 
   const eligible = state.items.filter((item) => item.kind === "task" && (item.status === "doing" || item.status === "planned"));
   const active = eligible.find((item) => item.id === state.activeId);
   return [active, ...eligible.filter((item) => item.id !== active?.id)]
-    .filter((item): item is WorkItem => Boolean(item))
+    .filter((item): item is WorkItem => item !== undefined)
     .slice(0, 3);
 };
 
