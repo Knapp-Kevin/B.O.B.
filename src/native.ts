@@ -9,11 +9,6 @@ export async function loadPersistentWorkState(): Promise<PersistentWorkState | n
   return invoke<PersistentWorkState>("load_work_state");
 }
 
-export async function savePersistentWorkState(workState: PersistentWorkState): Promise<PersistentWorkState | null> {
-  if (!isTauriRuntime()) return null;
-  return invoke<PersistentWorkState>("save_work_state", { workState });
-}
-
 export async function planRemainingWork(): Promise<PlanProjection | null> {
   if (!isTauriRuntime()) return null;
   return invoke<PlanProjection>("plan_remaining_work");
@@ -22,6 +17,41 @@ export async function planRemainingWork(): Promise<PlanProjection | null> {
 export async function replanRemainingWork(): Promise<ReplanResult | null> {
   if (!isTauriRuntime()) return null;
   return invoke<ReplanResult>("replan_remaining_work");
+}
+
+export async function captureItem(title: string): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("capture_item", { title });
+}
+
+export async function startCurrentWork(): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("start_current_work");
+}
+
+export async function deferCurrentWork(): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("defer_current_work");
+}
+
+export async function toggleTaskCompleted(itemId: string): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("toggle_task_completed", { itemId });
+}
+
+export async function selectNextTask(itemId: string): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("select_next_task", { itemId });
+}
+
+export async function saveCurrentHandoff(): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("save_current_handoff");
+}
+
+export async function clearHandoff(): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("clear_handoff");
 }
 
 export async function applyNextActionProposal(targetId: string): Promise<ReplanResult | null> {
