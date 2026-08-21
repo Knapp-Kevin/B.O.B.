@@ -1,5 +1,5 @@
-import { activeItem, escapeHtml, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
-import { configureGeminiCredential, loadPersistentWorkState, removeGeminiCredential, savePersistentWorkState } from "./native";
+import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
+import { configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -24,15 +24,36 @@ export function render() {
   bindEvents();
 }
 
+function applyBrowserFallbackPlan() {
+  state.focusIds = [];
+  const focus = focusItems();
+  state.focusIds = focus.map((item) => item.id);
+  const current = state.items.find((item) => item.id === state.activeId);
+  if ((!current || !["doing", "planned"].includes(current.status)) && focus[0]) state.activeId = focus[0].id;
+}
+
+async function refreshPlanProjection() {
+  try {
+    const plan = await planRemainingWork();
+    if (plan) applyPlanProjection(plan);
+    else applyBrowserFallbackPlan();
+  } catch (error) {
+    console.error("Failed to refresh deterministic B.O.B. plan projection", error);
+  }
+}
+
 async function commitWorkState(successMessage?: string) {
   try {
-    await savePersistentWorkState(persistentWorkState());
+    const durable = await savePersistentWorkState(persistentWorkState());
+    if (durable) hydratePersistentWorkState(durable);
+    await refreshPlanProjection();
     if (successMessage) showToast(successMessage);
   } catch (error) {
     console.error("Failed to persist B.O.B. work state", error);
     try {
       const durable = await loadPersistentWorkState();
       if (durable) hydratePersistentWorkState(durable);
+      await refreshPlanProjection();
     } catch (reloadError) {
       console.error("Failed to restore last durable B.O.B. work state", reloadError);
     }
@@ -84,13 +105,24 @@ function bindEvents() {
   });
   document.querySelector("#defer")?.addEventListener("click", () => {
     activeItem().status = "deferred";
-    const next = state.items.find((item) => item.status === "planned" && item.id !== state.activeId);
-    if (next) state.activeId = next.id;
     void commitWorkState("Deferred without losing it.");
   });
   document.querySelector("#replan")?.addEventListener("click", () => {
-    showToast("Prototype replan keeps completed work and reshapes only what remains.");
-    render();
+    void replanRemainingWork()
+      .then((result) => {
+        if (result) {
+          hydratePersistentWorkState(result.workState);
+          applyPlanProjection(result.plan);
+        } else {
+          applyBrowserFallbackPlan();
+        }
+        showToast("Replanned remaining work. Completed and deferred items stayed untouched.");
+      })
+      .catch((error) => {
+        console.error("Failed to replan remaining B.O.B. work", error);
+        showToast("B.O.B. could not replan right now. Your current work state was left unchanged.");
+      })
+      .finally(render);
   });
 
   document.querySelectorAll<HTMLElement>("[data-complete]").forEach((element) => element.addEventListener("click", () => {

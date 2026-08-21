@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { GeminiCredentialStatus, PersistentWorkState } from "./model";
+import type { GeminiCredentialStatus, PersistentWorkState, PlanProjection, ReplanResult } from "./model";
 
 const isTauriRuntime = () => "__TAURI_INTERNALS__" in window;
 const browserGeminiStatus: GeminiCredentialStatus = { configured: false, validation: "notConfigured" };
@@ -12,6 +12,16 @@ export async function loadPersistentWorkState(): Promise<PersistentWorkState | n
 export async function savePersistentWorkState(workState: PersistentWorkState): Promise<PersistentWorkState | null> {
   if (!isTauriRuntime()) return null;
   return invoke<PersistentWorkState>("save_work_state", { workState });
+}
+
+export async function planRemainingWork(): Promise<PlanProjection | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<PlanProjection>("plan_remaining_work");
+}
+
+export async function replanRemainingWork(): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("replan_remaining_work");
 }
 
 export async function loadGeminiCredentialStatus(): Promise<GeminiCredentialStatus> {
