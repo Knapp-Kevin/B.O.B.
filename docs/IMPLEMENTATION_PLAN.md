@@ -1,109 +1,111 @@
-# Revival Implementation Plan
+# Current Implementation Plan
 
-**Status:** Proposed  
-**Objective:** Replace the legacy alpha architecture with the smallest coherent implementation of the accepted product definition.
+**Status:** Active sequencing context  
+**Objective:** Continue advancing the accepted B.O.B. product through bounded, governed tracer bullets toward a coherent, validated desktop application.
 
 ## Strategy
 
-The revival should not incrementally rehabilitate every old subsystem. Git history already preserves the experiments. The active tree should become a clear representation of the current product.
+The revival architecture is no longer hypothetical. The active tree contains the Tauri 2 + Rust application foundation, Rust-owned SQLite state, Today/Inbox deterministic workflows, B.O.B. Assist/proposal boundaries, secure secret storage, recovery/export foundations, accessibility preferences, Windows packaging authority, and an advanced optional Gemini API adapter.
 
-The current first-alpha route is being resolved through the canonical Wayfinder map. This plan is therefore sequencing context, not authority to implement unresolved architecture. Before production implementation begins, the Wayfinder convergence audit must pass and the resulting build-ready specification and tracer-bullet tickets become the immediate implementation plan.
+Implementation therefore follows the live Wayfinder **build frontier**, not a pre-build phase gate. Consequential unresolved decisions block only work that depends on them. Safe disjoint implementation, review, validation, UX/accessibility work, security/privacy hardening, packaging/readiness work, and documentation reconciliation should continue.
 
-The architectural invariant is:
+Architectural invariant:
 
-> **B.O.B. is the agent. Models, inference runtimes, provider CLIs, and tools are capabilities behind B.O.B.**
+> **B.O.B. is the agent. Models, inference runtimes, provider APIs/CLIs, and tools are capabilities behind B.O.B.**
 
-## Phase 0: decision convergence
+## Current governing maps
 
-Deliverables:
+- #30: first runnable B.O.B. alpha waypoint and settled foundational authority;
+- #79: provider-independent inference and account onboarding;
+- #86: calm primary workflow and progressive disclosure.
 
-- resolved first-alpha Wayfinder decision route;
-- reconciled product definition and architecture specification;
-- required PRDs, RFCs, and ADRs in unambiguous lifecycle state;
-- governance and contribution rules;
-- explicit legacy/non-authoritative statement;
-- build-ready first-alpha specification;
-- tracer-bullet implementation tickets with real blockers and acceptance evidence.
+Maps are decision/destination indexes, not permanent project trackers. Use their current build-frontier owners and open PR state to avoid duplicate work.
 
-Exit condition: the convergence audit in `docs/governance/WAYFINDER.md` passes. No coding agent is required to invent product behavior, architecture, persistence semantics, provider/cost behavior, authority boundaries, or validation policy.
+## Landed foundation
 
-## First-alpha implementation destination
+Current `master` includes, at minimum:
 
-The current resolved Wayfinder route establishes these already-settled boundaries:
+- Tauri 2 desktop shell with Rust privileged core and TypeScript/Vite frontend;
+- Rust-owned SQLite canonical work state, migrations, recovery copies, managed backup/restore, and portable non-secret export;
+- Today, Inbox, deterministic planning/replanning, durable restart handoff, and accessibility preferences;
+- B.O.B. Assist core with Rust-enforced preview-before-apply proposal authority;
+- OS-backed credential/secret-store boundary;
+- Windows-first packaging and validation contract;
+- advanced optional Gemini API credential and context-inference path with fail-closed billing/privacy/provider-use policy.
 
-- Tauri 2 desktop application with Rust privileged core;
-- framework-free TypeScript + Vite frontend for the alpha unless measured complexity demonstrates a need to change;
-- Windows 11 x64 as the first supported alpha platform;
-- Today-first interaction shell with Inbox, B.O.B. Chat, Settings, accessibility, and overwhelmed/reorientation behavior;
-- one user-facing B.O.B. identity;
-- Gemini Developer API Free as the sole required first-alpha inference backend;
-- guided 2–3 step Gemini credential onboarding through Google AI Studio;
-- credentials stored outside ordinary application state through the resolved OS secret-store boundary;
-- deterministic planning remains useful when inference is unavailable;
-- Delegate/tool execution, a second inference backend, and local inference are deferred beyond the first alpha.
+These are current implementation surfaces, not future phases.
 
-Unresolved Wayfinder tickets still govern persistence/recovery details, B.O.B. agent-core/runtime contract, remaining credential/runtime-discovery policy, and validation/packaging. Their resolution may refine this destination before implementation starts.
+## Active build-frontier priorities
 
-## Expected tracer-bullet sequence
+### 1. Calm everyday workflow
 
-The exact implementation tickets must be generated from the final build-ready specification rather than copied mechanically from this document. The expected vertical sequence is:
+Wayfinder #86 owns the current rendered UX convergence. Preferred bounded sequence when live ownership permits:
 
-### Application foundation and canonical local state
+1. Settings/provider positioning cleanup under #82;
+2. Today hierarchy/density convergence under #87;
+3. Inbox and Chat density/empty-state refinement under #88.
 
-Establish the approved Tauri/Rust/TypeScript boundary, canonical local persistence, migration/recovery behavior, protected credential abstraction, and reproducible local development validation.
+Material UI changes require rendered evidence at normal and minimum supported Windows sizes, including normal/reduced-information modes where relevant, larger text, keyboard focus, reduced motion, clipping/overlap, dead space, and hierarchy.
 
-### Today + Inbox deterministic workflow
+### 2. Provider-independent inference
 
-Implement capture, item lifecycle, Today hierarchy, focus items, manual day blocks, completion/deferral, deterministic replanning, restart continuity, and accessibility baseline without requiring inference.
+Wayfinder #79 supersedes the idea that one provider is B.O.B.'s permanent destination.
 
-### Gemini onboarding and B.O.B. Assist
+Current rules:
 
-Implement the resolved Gemini Developer API Free credential flow, secure validation/storage state, B.O.B. agent-core contract, bounded context assembly, normalized inference invocation, proposal validation, and preview-before-apply behavior.
+- Gemini Developer API remains a working advanced optional adapter and first-alpha proof point;
+- account-backed or local paths are preferred for normal-user onboarding when officially supported and accepted;
+- do not invent Google account/OAuth, Claude/Codex, Ollama/LM Studio, or first-party local-runtime behavior ahead of the governing research/decisions;
+- every path remains behind B.O.B.-owned routing, continuity, state, privacy, authority, and cost policy;
+- deterministic B.O.B. remains useful with no inference configured;
+- no silent paid/provider/model fallback.
 
-### Continuity and failure behavior
+### 3. Executable readiness
 
-Verify resume/handoff, reorientation, compact conversation/work continuity, inference-unavailable behavior, quota/auth/provider failure handling, and recovery without corrupting canonical state.
+Source review and small hosted CI are not release evidence by themselves. Continue closing exact-head readiness debt with the strongest available evidence:
 
-### Windows alpha packaging and acceptance
+- `npm run validate` and locked dependency reproducibility;
+- Rust format/clippy/test and Tauri build on capable environments;
+- Windows restart/persistence/recovery exercises;
+- Windows Credential Manager set/replace/remove/restart behavior;
+- rendered accessibility/UX regression;
+- provider-boundary behavior where a live provider is relevant;
+- NSIS package install/launch/uninstall smoke.
 
-Produce the resolved Windows 11 x64 package and the required local/manual evidence for Today, Inbox, Chat, accessibility, restart/recovery, credential handling, and runtime failure behavior.
+If a merge/rebase changes a previously validated head, rerun the affected evidence rather than inheriting it cosmetically.
 
-## Deferred expansion slices
+## Continuous tracer-bullet model
 
-After first-alpha acceptance, later tracer slices may add:
+Select one bounded slice per governed cycle when possible. A good slice:
 
-- a second inference/runtime adapter while preserving B.O.B. identity and canonical state;
-- subscription-backed Claude/Codex or other supported runtime paths;
-- optional local inference;
-- bounded Delegate/tool authority;
-- additional desktop platforms when justified.
+- is authorized by accepted product/architecture/governance or a current Wayfinder build-frontier owner;
+- has no overlapping active PR;
+- produces a user-visible, security, validation, recovery, documentation, or executable-readiness improvement;
+- fits one fresh coding-agent context;
+- preserves explicit authority/security/cost/state boundaries;
+- leaves a precise next action.
 
-These are not first-alpha blockers unless the Wayfinder route is explicitly reopened by the owner.
+Do not manufacture speculative expansion merely to keep the loop occupied.
+
+## Deferred or separately governed expansion
+
+The following require later accepted authority or current Wayfinder convergence before implementation:
+
+- new account-backed runtime adapters whose supported integration path is not yet established;
+- local inference architecture beyond the accepted provider-independent seam;
+- mobile clients and cloud/shared continuity;
+- Delegate/tool execution beyond bounded accepted authority;
+- generalized RAG/knowledge-center infrastructure;
+- plugin marketplaces;
+- peer-agent/multi-agent UX;
+- cognitive profiling or diagnostic behavior.
 
 ## Legacy cleanup policy
 
-Before deleting historical code, identify whether it contains product behavior that is still required by an accepted PRD or resolved Wayfinder decision. Preserve required behavior by rewriting it into the new architecture, not by keeping an incompatible subsystem alive.
+Git history and the named archive branch preserve retired experiments. Do not keep obsolete runtime implementations in the active tree for sentimental continuity. Preserve still-required behavior by implementing it through current architecture and authority.
 
-Historical implementation is already preserved in Git history and the named archive branch. Do not recreate an active-tree archive merely to make deletion feel safer.
+## Validation ownership
 
-## Validation matrix
+`docs/VALIDATION.md` is the accepted Windows-first evidence contract. Implementing agents own truthful exact-head validation. Missing tooling or unavailable native/provider environments are explicit remaining debt, not passing evidence.
 
-The final validation commands and packaging evidence are owned by the Wayfinder validation/packaging decision and build-ready specification. At minimum the implementation route must cover:
-
-| Capability | Deterministic tests | Integration tests | Manual UX check |
-| --- | ---: | ---: | ---: |
-| Item lifecycle | Required | Required | Required |
-| Day planning | Required | Required | Required |
-| Persistence/recovery | Required | Required | Required |
-| B.O.B. proposal/authority policy | Required | Required | Required |
-| Gemini adapter invocation | Required where mockable | Required | Required |
-| Inference-unavailable behavior | Required | Required | Required |
-| Credential redaction/storage boundary | Required where testable | Required | Required |
-| Accessibility | Partial automation | N/A | Required |
-| Windows packaging | N/A | Required | Required |
-
-These checks are primarily the responsibility of the implementing developer or coding agent. Repository CI may remain deliberately small and should not be expanded merely to duplicate validation already required before review.
-
-## Scope discipline
-
-Do not parallelize features merely because old code contains them. The first-alpha release path is the resolved Wayfinder destination. Knowledge centers, generalized RAG, analytics dashboards, agent swarms, plugin ecosystems, cloud sync, cognitive profiling, Delegate/tool execution, additional inference backends, and unrelated experimental modules remain outside the first alpha unless an explicit owner decision changes that boundary.
+Repository CI remains deliberately small unless a stronger gate is justified by demonstrated risk.

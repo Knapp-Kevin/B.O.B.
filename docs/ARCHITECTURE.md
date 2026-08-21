@@ -5,19 +5,17 @@
 
 ## Architectural objective
 
-Build the smallest desktop architecture that can present **one coherent B.O.B. agent**, safely own local personal state, and draw on multiple LLMs, inference runtimes, and tools over time without exposing that back-end complexity as the user's interaction model.
+Build the smallest desktop architecture that presents one coherent B.O.B. agent, safely owns local personal state, and can draw on multiple inference runtimes and tools over time without exposing backend complexity as the user's interaction model.
 
-The target is a Tauri 2 desktop shell with a Rust application core and a lightweight TypeScript frontend.
+The current desktop architecture is a Tauri 2 shell with a Rust application core and a framework-free TypeScript + Vite frontend. Windows 11 x64 is the primary supported platform for the current runnable waypoint.
 
-For the first runnable alpha, the resolved Wayfinder route narrows that target to Windows 11 x64, framework-free TypeScript + Vite, Gemini Developer API Free as the sole required inference backend, and bounded Assist behavior. Additional inference/runtime adapters, local inference, and Delegate/tool execution remain later expansion paths.
+The first-alpha Gemini Developer API Free path proved the inference, credential, privacy, billing, and failure-policy seams. It remains an advanced optional adapter. Current Wayfinder direction is provider-independent: future account-backed and local paths must fit behind B.O.B.-owned routing, state, continuity, authority, and cost policy rather than redefining the application around any provider.
 
 ## Core invariant
 
-> **B.O.B. is the agent. Models, inference runtimes, and tools are capabilities behind B.O.B.**
+> **B.O.B. is the agent. Models, inference runtimes, provider APIs/CLIs, and tools are capabilities behind B.O.B.**
 
-Gemini, future Claude/Codex account-backed paths, local models, and approved tools may supply reasoning, generation, or later execution capabilities. They are not peer agents in the product architecture.
-
-The user has one point of contact: B.O.B.
+The user has one point of contact: B.O.B. Removing any single inference adapter must leave B.O.B. buildable, launchable, state-safe, and usefully deterministic.
 
 ## System context
 
@@ -28,16 +26,18 @@ flowchart TB
     BOB <--> STATE[(Canonical local state)]
     BOB --> POLICY[Context · Cost · Authority · Routing]
 
-    POLICY --> GEMINI[Gemini adapter\nfirst alpha]
-    POLICY --> FUTURE[Future runtime adapters]
+    POLICY --> GEMINI[Gemini API adapter\nadvanced optional]
+    POLICY --> ACCOUNT[Future supported\naccount-backed adapters]
+    POLICY --> LOCAL[Future supported\nlocal adapters]
     POLICY --> TOOLS[Approved tools\nlater bounded execution]
 
     GEMINI --> BOB
-    FUTURE --> BOB
+    ACCOUNT --> BOB
+    LOCAL --> BOB
     TOOLS --> BOB
 ```
 
-B.O.B. is the product identity and system of record. Inference/runtime adapters provide capabilities.
+B.O.B. is the product identity and system of record. Inference/runtime adapters provide replaceable capabilities.
 
 ## Logical architecture
 
@@ -69,8 +69,8 @@ flowchart TB
     end
 
     subgraph RUNTIMES[Inference / Runtime Adapter Boundary]
-        GEMINI[GeminiAdapter\nfirst alpha]
-        OTHER[FutureRuntimeAdapter]
+        GEMINI[GeminiAdapter\nadvanced optional]
+        OTHER[Future supported adapters]
     end
 
     UI --> CMD
@@ -102,89 +102,76 @@ flowchart TB
 
 The frontend renders B.O.B. state and sends typed commands. It does not receive unrestricted filesystem, process, shell, database, or credential access.
 
-The UI should expose provider/runtime detail only when useful for explicit choice, cost, privacy, capability, or troubleshooting. Ordinary interaction remains with B.O.B.
+Provider/runtime detail is exposed only when useful for explicit configuration, cost, privacy, capability, or troubleshooting. Ordinary interaction remains with B.O.B. Settings must not make provider plumbing the product identity.
 
 ### B.O.B. Agent Core
 
-The B.O.B. Agent Core is the single user-facing agent orchestration boundary. It owns:
+The B.O.B. Agent Core is the single user-facing orchestration boundary. The accepted #34 contract gives it responsibility for:
 
 - conversational identity and response assembly;
 - intent interpretation;
-- selection or honoring of supported inference preferences;
-- context requests;
-- proposal handling;
-- coordination with deterministic task/planning services;
-- result/evidence presentation;
-- later authority transitions when bounded Delegate behavior is implemented.
+- bounded context assembly;
+- inference routing and policy coordination;
+- proposal validation;
+- deterministic-service coordination;
+- compact continuity and failure handling;
+- result/evidence presentation.
 
-It does not surrender canonical state ownership to an underlying runtime.
-
-The exact first-alpha agent-core and routing contract remains governed by the active Wayfinder decision ticket until resolved.
+It does not surrender canonical state ownership to an underlying runtime. Model/runtime output is untrusted until B.O.B. validates it. Important state-changing proposals are previewed before application.
 
 ### Deterministic application services
 
-The Rust core owns deterministic business behavior:
-
-- item lifecycle;
-- daily planning and schedule operations;
-- persistence orchestration;
-- export and migration;
-- proposal validation;
-- authority and cost enforcement.
-
-These services remain usable when no LLM is available.
+The Rust core owns deterministic business behavior, including item lifecycle, planning, persistence orchestration, export/migration, proposal validation, preference handling, and authority/cost enforcement. These services remain useful when no inference runtime is available.
 
 ### Inference router
 
-The inference router selects an allowed inference/runtime adapter according to the active product boundary, explicit user choice where supported, configured default, availability, cost policy, privacy constraints, and required capabilities.
+The inference router selects only allowed capabilities according to supported configuration, explicit user choice where applicable, availability, auth state, billing classification, privacy constraints, and required capability.
 
-The first alpha has one required adapter, Gemini Developer API Free, so routing can remain deliberately simple. Future releases may add more adapters without changing B.O.B.'s user-facing identity.
+Authentication method does not imply billing class. Unknown billing classification fails closed. Provider/model changes that materially affect cost, privacy, or user intent never happen silently.
 
-Opaque model scoring or autonomous optimization is not required.
+The router must not become a speculative universal provider framework. Normalize only the fields and lifecycle behavior required by supported adapters.
 
 ### Inference/runtime adapters
 
-Adapters normalize supported inference/execution backends to one internal contract. They do not become B.O.B.'s user-facing identity and do not own product state.
+Adapters normalize supported inference backends to narrow internal contracts. They do not become B.O.B.'s user-facing identity and do not own product state.
 
-An adapter may report, as appropriate to its supported surface:
+An adapter may report, where supported:
 
 - availability;
-- authentication state where safely observable;
-- model/runtime identity;
+- authentication state;
+- runtime/model identity;
 - capabilities;
 - billing class;
 - invocation status;
 - structured result;
-- cancellation when supported.
+- cancellation.
 
-The exact normalized first-alpha contract remains governed by the active Wayfinder agent-core/runtime decision until resolved.
+Gemini Developer API is the currently implemented cloud adapter and remains subject to its accepted professional/business-use, unpaid-service data-use, secret, and billing boundaries. Account-backed and local adapters remain governed by Wayfinder #79 and must not be invented ahead of accepted authority.
 
 ### Tool gateway
 
-Tools are separate capabilities from the inference/runtime identity. A future tool gateway will enforce allowlisted, typed operations and bounded external authority.
-
-Delegate/tool execution is not a first-alpha requirement. The alpha must preserve a clean seam for later bounded authority without granting ordinary Assist chat shell, filesystem, repository, or broad external permissions.
+Tools are separate capabilities from inference/runtime identity. Future Delegate behavior may add bounded execution authority through explicit user grants. Ordinary Assist requests do not inherit shell, filesystem, repository, or broad external permissions.
 
 ### Persistence
 
-Persistence is local-first and single-user. The accepted first-alpha contract is:
+Persistence is local-first and single-user. The accepted contract is:
 
 - one SQLite database owned exclusively by the Rust core as canonical ordinary application state;
 - every logical state change commits transactionally or not at all;
 - Rust owns immutable monotonic migrations and startup compatibility checks;
 - schema-changing migrations create SQLite-consistent safety copies and fail closed on open/migration failure;
-- B.O.B. retains two bounded pre-migration known-good safety copies;
+- B.O.B. retains bounded known-good recovery snapshots;
 - ordinary crash consistency relies on SQLite rather than custom shadow-file logic;
-- backup/restore uses SQLite-consistent snapshots;
+- backup/restore uses SQLite-consistent snapshots with fail-closed rollback;
 - portable export is a documented versioned JSON package of user-owned non-secret state;
 - credentials remain in the OS secret store, with SQLite limited to non-secret references/status;
 - corruption or migration failure never silently resets user data.
 
-The SQLite schema owns ordinary alpha product state, not an open-ended advanced memory subsystem. When richer governed-memory behavior becomes relevant, B.O.B. should preferentially integrate with the existing `MythologIQ-Labs-LLC/agent-memory` project through a later explicit contract rather than independently inventing a competing memory architecture.
+The SQLite schema owns ordinary product state, not an open-ended advanced memory subsystem. Richer governed-memory behavior should preferentially integrate later with `MythologIQ-Labs-LLC/agent-memory` through an explicit contract.
 
 See ADR-0004 and RFC-0003.
 
-## First-alpha request flow
+## Request flow
 
 ```mermaid
 sequenceDiagram
@@ -194,24 +181,24 @@ sequenceDiagram
     participant P as Policy
     participant X as Context Broker
     participant R as Inference Router
-    participant G as Gemini Adapter
+    participant A as Selected Adapter
     participant S as Canonical State
 
     U->>UI: Ask B.O.B.
     UI->>B: Typed request
-    B->>P: Check privacy + cost + authority policy
+    B->>P: Check authority + cost + privacy
     P-->>B: Allowed constraints
     B->>X: Build bounded context
     X-->>B: Context package
-    B->>R: Request inference
-    R->>G: Invoke Gemini Free adapter
-    G-->>R: Normalized result
+    B->>R: Request supported capability
+    R->>A: Invoke selected allowed adapter
+    A-->>R: Normalized result
     R-->>B: Inference result
-    B->>B: Validate proposals
-    B-->>UI: Response + proposed actions
-    U->>UI: Confirm or reject important proposal
+    B->>B: Validate response/proposals
+    B-->>UI: Response + previewed actions
+    U->>UI: Confirm or reject important action
     UI->>B: Disposition
-    B->>S: Apply validated confirmed state change
+    B->>S: Apply validated confirmed change
 ```
 
 The user never changes conversational identity during this flow. Inference failure leaves deterministic B.O.B. behavior available.
@@ -231,120 +218,70 @@ The user never changes conversational identity during this flow. Inference failu
 |             B.O.B. Context + Policy Boundary                    |
 +-------------------------|----------------------------------------+
                           |
-             selected capability, not identity
+                selected capability, not identity
                           |
-               +----------+-----------+
-               |                      |
-          Gemini adapter      Future adapters/tools
-          first alpha          later capabilities
-               |                      |
-          non-canonical           non-canonical
-            backend                capability
+          +---------------+----------------+----------------+
+          |                                |                |
+   Gemini API adapter            Account-backed paths   Local paths
+   advanced optional             when supported         when accepted
+          |                                |                |
+   non-canonical backend          non-canonical          non-canonical
 ```
 
 ## State domains
 
 ### Item
 
-Minimum conceptual fields:
-
-- `id`
-- `type`: task, idea, note, reminder
-- `title`
-- `notes`
-- `status`: inbox, planned, doing, done, deferred, archived
-- `priority`: low, normal, high
-- `estimateMinutes`
-- `dueAt`
-- `energy`: optional low, medium, high
-- `tags`
-- `createdAt`
-- `updatedAt`
+Minimum conceptual fields include `id`, `type`, `title`, `notes`, lifecycle `status`, `priority`, estimate, due time, optional energy, tags, and creation/update timestamps.
 
 ### DayPlan
 
-A day plan owns:
-
-- date;
-- focus item IDs, maximum three by default;
-- ordered blocks;
-- optional day start and end;
-- optional capacity constraints;
-- generated/replanned metadata sufficient to explain the current plan.
+A day plan owns its date, up to three default focus items, ordered blocks, optional day bounds/capacity, and enough generated/replanned metadata to explain the current plan.
 
 ### ConversationContinuity
 
-B.O.B. stores compact continuity needed to preserve the one-agent experience across restart and future runtime changes, such as:
-
-- B.O.B. conversation/thread identity;
-- current user intent;
-- relevant work/task associations;
-- compact summaries;
-- runtime used for an inference turn when useful for inspection;
-- returned proposals and outcomes.
-
-Vendor/runtime transcripts are not required to become canonical state.
-
-This compact alpha continuity is ordinary product state. Richer governed-memory semantics remain a later explicit Agent Memory integration decision rather than implicit permission to grow the SQLite schema into a new memory platform.
+B.O.B. stores compact continuity needed to preserve the one-agent experience across restart and runtime changes: conversation/thread identity, current intent, relevant work associations, compact summaries, runtime identity when useful, and returned proposals/outcomes. Vendor/runtime transcripts are not canonical state by default.
 
 ## Authority model
 
-Authority belongs to B.O.B., not directly to whichever runtime supplied inference.
-
-For the first alpha, Assist behavior is the implemented authority boundary: B.O.B. may reason, summarize, organize, transform, and propose using an allowed inference adapter, but important application changes remain validated and previewed before application.
-
-Future Delegate behavior may add bounded execution authority through an explicit user grant. That future seam must not cause ordinary alpha Assist requests to inherit tool or coding-agent permissions.
+Authority belongs to B.O.B., not whichever runtime supplied inference. Assist may reason, summarize, organize, transform, and propose using an allowed adapter. Important state changes remain validated and previewed before application. Future Delegate behavior requires a separate bounded grant.
 
 ## Cost-policy boundary
 
-Every inference/runtime adapter declares one billing class:
+Every inference/runtime adapter declares one billing class: `free`, `subscription`, `local`, `metered`, or `unknown`.
 
-- `free`
-- `subscription`
-- `local`
-- `metered`
-- `unknown`
+Unknown is blocked until classified. Metered inference is disabled by default and requires explicit user enablement. Authentication mechanism alone does not determine billing class.
 
-Unknown is blocked until classified. Metered inference is disabled by default.
+The implemented Gemini API path is an advanced optional adapter with its own accepted provider-purpose/data-use and Free-Tier confirmation boundary. Future account-backed/local paths must preserve the same no-surprise-billing invariant.
 
-Authentication mechanism alone does not determine billing class.
-
-The first-alpha Gemini Developer API Free path is classified `free` for the supported integration surface and remains subject to provider quota, eligibility, and privacy/data-use policy. Quota exhaustion or provider failure does not silently transition the user into paid inference.
-
-See `docs/governance/AI_COST_AND_PROVIDER_POLICY.md` for the durable policy.
+See `docs/governance/AI_COST_AND_PROVIDER_POLICY.md`.
 
 ## Failure behavior
 
-B.O.B. must degrade safely:
+B.O.B. degrades safely:
 
-- first-alpha inference unavailable: deterministic B.O.B. remains operational;
-- free quota exhausted: remain non-metered and explain the available next step;
-- invalid or missing credential: do not send inference requests and preserve deterministic operation;
+- inference unavailable: deterministic B.O.B. remains operational;
+- quota/auth/provider/network failure: no silent paid or different-provider fallback;
 - invalid model proposal: reject without changing canonical state;
-- persistence interruption: preserve user data and follow the accepted SQLite migration/recovery contract in ADR-0004/RFC-0003;
+- persistence interruption: preserve user data and follow ADR-0004/RFC-0003 recovery semantics;
 - runtime/provider failure: isolate failure from canonical state;
-- future tool failure: return evidence/status without silently widening authority.
+- future tool failure: return evidence/status without widening authority.
 
 ## Technology boundaries
 
-First-alpha direction:
+Current direction:
 
 - Tauri 2 desktop shell;
 - Rust privileged application core;
 - framework-free TypeScript + Vite frontend;
-- Windows 11 x64 primary support;
+- Windows 11 x64 primary platform;
 - one B.O.B. agent identity;
-- Gemini Developer API Free first inference adapter;
-- internal inference/runtime adapter boundary;
 - Rust-owned SQLite canonical ordinary-state store;
-- protected OS secret-store boundary;
-- no required local HTTP inference server;
-- no required Python runtime;
-- no required vector database;
+- OS-backed secret-store boundary;
+- provider-independent inference/runtime seams;
+- Gemini Developer API as an advanced optional current adapter;
+- no required local HTTP inference server, Python runtime, vector database, peer-agent UX, or mandatory provider client;
 - no direct UI access to native secrets, database, shell, or arbitrary filesystem;
-- no required local inference runtime;
-- no required second backend;
-- no first-alpha Delegate/tool execution;
-- no first-alpha competing advanced memory subsystem.
+- no competing advanced-memory subsystem inside ordinary SQLite state.
 
-Future adapters, governed-memory integration, and bounded tools may extend these seams only when authorized by later product/architecture decisions.
+Future account-backed adapters, local inference, governed-memory integration, and bounded tools may extend these seams only when authorized by later product/architecture decisions.
