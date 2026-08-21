@@ -1,5 +1,5 @@
 import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
-import { configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
+import { applyNextActionProposal, configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -190,14 +190,31 @@ function bindEvents() {
   document.querySelector("#apply-proposal")?.addEventListener("click", () => {
     const proposal = state.pendingProposal;
     if (!proposal) return;
-    const target = state.items.find((item) => item.id === proposal.targetId);
-    if (target) {
-      target.status = "planned";
-      state.activeId = target.id;
-    }
-    state.pendingProposal = undefined;
-    state.route = "today";
-    void commitWorkState("Applied the previewed change. Everything else stayed put.");
+
+    void applyNextActionProposal(proposal.targetId)
+      .then((result) => {
+        if (result) {
+          hydratePersistentWorkState(result.workState);
+          applyPlanProjection(result.plan);
+        } else {
+          const target = state.items.find((item) => item.id === proposal.targetId);
+          if (!target || target.kind !== "task" || ["done", "deferred"].includes(target.status)) {
+            showToast("That proposal is stale or no longer safe to apply. Nothing changed.");
+            return;
+          }
+          if (target.status === "inbox") target.status = "planned";
+          state.activeId = target.id;
+          applyBrowserFallbackPlan();
+        }
+        state.pendingProposal = undefined;
+        state.route = "today";
+        showToast("Applied the previewed change. Everything else stayed put.");
+      })
+      .catch((error) => {
+        console.error("B.O.B. rejected a previewed state-change proposal", error);
+        showToast("That proposal is stale or no longer safe to apply. Nothing changed.");
+      })
+      .finally(render);
   });
   document.querySelector("#dismiss-proposal")?.addEventListener("click", () => {
     state.pendingProposal = undefined;
