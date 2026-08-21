@@ -1,10 +1,10 @@
-use crate::state::{HandoffSnapshot, Store, WorkItem, WorkState};
+use crate::state::{AccessibilityPreferences, HandoffSnapshot, Store, WorkItem, WorkState};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use tauri::State;
 
 const EXPORT_SCHEMA: &str = "bob.portable-export";
-const EXPORT_VERSION: u32 = 1;
+const EXPORT_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,9 +26,13 @@ struct PortableExport {
     version: u32,
     work: PortableWorkState,
     continuity: PortableContinuity,
+    preferences: AccessibilityPreferences,
 }
 
-fn build_export(state: WorkState) -> PortableExport {
+fn build_export(
+    state: WorkState,
+    preferences: AccessibilityPreferences,
+) -> PortableExport {
     PortableExport {
         schema: EXPORT_SCHEMA,
         version: EXPORT_VERSION,
@@ -39,17 +43,25 @@ fn build_export(state: WorkState) -> PortableExport {
         continuity: PortableContinuity {
             handoff: state.handoff,
         },
+        preferences,
     }
 }
 
-pub fn export_json(state: WorkState) -> Result<String> {
-    serde_json::to_string_pretty(&build_export(state)).context("serialize B.O.B. portable export")
+pub fn export_json(
+    state: WorkState,
+    preferences: AccessibilityPreferences,
+) -> Result<String> {
+    serde_json::to_string_pretty(&build_export(state, preferences))
+        .context("serialize B.O.B. portable export")
 }
 
 #[tauri::command]
 pub fn export_portable_state(store: State<'_, Store>) -> std::result::Result<String, String> {
     let state = store.load().map_err(|error| error.to_string())?;
-    export_json(state).map_err(|error| error.to_string())
+    let preferences = store
+        .load_accessibility_preferences()
+        .map_err(|error| error.to_string())?;
+    export_json(state, preferences).map_err(|error| error.to_string())
 }
 
 #[cfg(test)]
@@ -77,9 +89,16 @@ mod tests {
         }
     }
 
+    fn sample_preferences() -> AccessibilityPreferences {
+        AccessibilityPreferences {
+            larger_text: true,
+            reduced_motion: true,
+        }
+    }
+
     #[test]
     fn export_is_versioned_and_uses_product_terms() -> Result<()> {
-        let json = export_json(sample_state())?;
+        let json = export_json(sample_state(), sample_preferences())?;
         let parsed: Value = serde_json::from_str(&json)?;
 
         assert_eq!(parsed["schema"], EXPORT_SCHEMA);
@@ -90,12 +109,14 @@ mod tests {
             parsed["continuity"]["handoff"]["objective"],
             "Export this task"
         );
+        assert_eq!(parsed["preferences"]["largerText"], true);
+        assert_eq!(parsed["preferences"]["reducedMotion"], true);
         Ok(())
     }
 
     #[test]
     fn export_surface_contains_no_secret_store_fields() -> Result<()> {
-        let json = export_json(sample_state())?.to_lowercase();
+        let json = export_json(sample_state(), sample_preferences())?.to_lowercase();
         assert!(!json.contains("api_key"));
         assert!(!json.contains("apikey"));
         assert!(!json.contains("credential"));
