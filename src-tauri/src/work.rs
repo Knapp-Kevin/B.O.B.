@@ -2,7 +2,7 @@ use crate::{
     planner::{project_remaining_work, ReplanResult},
     state::{HandoffSnapshot, Store, WorkItem, WorkState},
 };
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 
@@ -24,7 +24,7 @@ pub fn normalize_store(store: &Store) -> Result<()> {
     if state.active_id == expected {
         return Ok(());
     }
-    let _ = persist_normalized(store, state)?;
+    persist_normalized(store, state)?;
     Ok(())
 }
 
@@ -211,6 +211,19 @@ mod tests {
             due: None,
             status: status.into(),
         }
+    }
+
+    #[test]
+    fn normalization_preserves_a_genuinely_empty_first_run() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let store = Store::open(directory.path())?;
+
+        normalize_store(&store)?;
+
+        let state = store.load()?;
+        assert!(state.items.is_empty());
+        assert_eq!(state.active_id, None);
+        Ok(())
     }
 
     #[test]
