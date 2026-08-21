@@ -2,6 +2,7 @@ export type Route = "today" | "inbox" | "chat" | "settings";
 export type ItemKind = "task" | "idea" | "note" | "reminder";
 export type ItemStatus = "inbox" | "planned" | "doing" | "done" | "deferred";
 export type SetupStep = 1 | 2 | 3;
+export type GeminiValidationState = "notConfigured" | "ready" | "invalidCredential" | "quotaLimited" | "unavailable";
 
 export interface WorkItem {
   id: string;
@@ -16,6 +17,11 @@ export interface WorkItem {
 export interface PersistentWorkState {
   activeId: string | null;
   items: WorkItem[];
+}
+
+export interface GeminiCredentialStatus {
+  configured: boolean;
+  validation: GeminiValidationState;
 }
 
 export interface ChatMessage {
@@ -44,7 +50,9 @@ export interface AppState {
   chat: ChatMessage[];
   setupOpen: boolean;
   setupStep: SetupStep;
+  gemini: GeminiCredentialStatus;
   geminiStaged: boolean;
+  geminiBusy: boolean;
   largerText: boolean;
   reducedMotion: boolean;
   toast: string;
@@ -72,7 +80,9 @@ export const state: AppState = {
   chat: [{ author: "bob", text: "Give me the messy version. I’ll help you find the next useful move." }],
   setupOpen: false,
   setupStep: 1,
+  gemini: { configured: false, validation: "notConfigured" },
   geminiStaged: false,
+  geminiBusy: false,
   largerText: false,
   reducedMotion: false,
   toast: ""

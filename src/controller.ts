@@ -1,5 +1,5 @@
 import { activeItem, escapeHtml, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
-import { loadPersistentWorkState, savePersistentWorkState } from "./native";
+import { configureGeminiCredential, loadPersistentWorkState, removeGeminiCredential, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -49,6 +49,13 @@ function openSetup(step: SetupStep = state.geminiStaged ? 3 : 1) {
   state.setupStep = step;
   state.setupOpen = true;
   render();
+}
+
+function geminiFailureMessage(validation: typeof state.gemini.validation) {
+  if (validation === "invalidCredential") return "Google did not accept that key. The existing credential was left unchanged.";
+  if (validation === "quotaLimited") return "Gemini is currently rate or quota limited. B.O.B. did not replace the stored credential.";
+  if (validation === "unavailable") return "Gemini could not be verified right now. B.O.B. did not replace the stored credential.";
+  return "Gemini is not configured.";
 }
 
 function bindEvents() {
@@ -166,22 +173,62 @@ function bindEvents() {
 
   document.querySelector("#setup")?.addEventListener("click", () => openSetup());
   document.querySelector("#replace-key")?.addEventListener("click", () => openSetup(2));
+  document.querySelector("#remove-key")?.addEventListener("click", () => {
+    if (state.geminiBusy) return;
+    state.geminiBusy = true;
+    render();
+    void removeGeminiCredential()
+      .then((status) => {
+        state.gemini = status;
+        state.geminiStaged = false;
+        state.setupOpen = false;
+        showToast("Gemini credential removed. Deterministic B.O.B. remains available.");
+      })
+      .catch((error) => {
+        console.error("Failed to remove Gemini credential", error);
+        showToast("B.O.B. could not remove the credential from protected storage.");
+      })
+      .finally(() => {
+        state.geminiBusy = false;
+        render();
+      });
+  });
   document.querySelector("#close-setup")?.addEventListener("click", () => { state.setupOpen = false; render(); });
   document.querySelector("#setup-have-key")?.addEventListener("click", () => { state.setupStep = 2; render(); });
   document.querySelector("#setup-back")?.addEventListener("click", () => { state.setupStep = Math.max(1, state.setupStep - 1) as SetupStep; render(); });
   document.querySelector("#stage-key")?.addEventListener("click", () => {
+    if (state.geminiBusy) return;
     const input = document.querySelector<HTMLInputElement>("#gemini-key");
-    const value = input?.value.trim() ?? "";
+    const value = input?.value ?? "";
     if (input) input.value = "";
-    if (value.length < 20) {
+    if (value.trim().length < 20) {
       showToast("That does not look like a complete key. Nothing was stored.");
       render();
       return;
     }
-    state.geminiStaged = true;
-    state.setupStep = 3;
-    showToast("Key cleared from the form. Prototype validation state only.");
+
+    state.geminiBusy = true;
     render();
+    void configureGeminiCredential(value)
+      .then((status) => {
+        state.gemini = status;
+        if (status.validation === "ready") {
+          state.geminiStaged = true;
+          state.setupStep = 3;
+          showToast("Gemini key validated and stored in protected OS credential storage.");
+        } else {
+          if (!status.configured) state.geminiStaged = false;
+          showToast(geminiFailureMessage(status.validation));
+        }
+      })
+      .catch((error) => {
+        console.error("Gemini credential setup failed", error);
+        showToast("B.O.B. could not validate or store that credential. Nothing was replaced.");
+      })
+      .finally(() => {
+        state.geminiBusy = false;
+        render();
+      });
   });
   document.querySelector("#continue-setup")?.addEventListener("click", () => {
     state.setupOpen = false;
