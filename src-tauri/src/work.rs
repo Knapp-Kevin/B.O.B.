@@ -50,6 +50,10 @@ fn current_planned_id(state: &WorkState) -> Option<String> {
     project_remaining_work(state).next_id
 }
 
+fn valid_item_kind(kind: &str) -> bool {
+    matches!(kind, "task" | "idea" | "note" | "reminder")
+}
+
 #[tauri::command]
 pub fn capture_item(
     store: State<'_, Store>,
@@ -74,6 +78,30 @@ pub fn capture_item(
             status: "inbox".into(),
         },
     );
+    persist_normalized(&store, state).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn classify_inbox_item(
+    store: State<'_, Store>,
+    item_id: String,
+    kind: String,
+) -> std::result::Result<ReplanResult, String> {
+    let kind = kind.trim().to_ascii_lowercase();
+    if !valid_item_kind(&kind) {
+        return Err("item classification is not supported".into());
+    }
+
+    let mut state = store.load().map_err(|error| error.to_string())?;
+    let target = state
+        .items
+        .iter_mut()
+        .find(|item| item.id == item_id)
+        .ok_or_else(|| "Inbox item does not exist in canonical state".to_string())?;
+    if target.status != "inbox" {
+        return Err("only Inbox items can be reclassified".into());
+    }
+    target.kind = kind;
     persist_normalized(&store, state).map_err(|error| error.to_string())
 }
 
@@ -259,5 +287,37 @@ mod tests {
 
         assert_eq!(store.load()?.active_id.as_deref(), Some("task"));
         Ok(())
+    }
+
+    #[test]
+    fn reclassifying_inbox_item_changes_only_kind() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let store = Store::open(directory.path())?;
+        store.save(&WorkState {
+            active_id: None,
+            items: vec![item("captured", "note", "inbox")],
+            handoff: None,
+        })?;
+
+        let mut state = store.load()?;
+        let target = state.items.iter_mut().find(|item| item.id == "captured").unwrap();
+        target.kind = "task".into();
+        persist_normalized(&store, state)?;
+
+        let persisted = store.load()?;
+        let target = persisted.items.iter().find(|item| item.id == "captured").unwrap();
+        assert_eq!(target.kind, "task");
+        assert_eq!(target.status, "inbox");
+        assert_eq!(persisted.active_id, None);
+        Ok(())
+    }
+
+    #[test]
+    fn supported_item_kind_set_is_closed() {
+        assert!(valid_item_kind("task"));
+        assert!(valid_item_kind("idea"));
+        assert!(valid_item_kind("note"));
+        assert!(valid_item_kind("reminder"));
+        assert!(!valid_item_kind("calendar"));
     }
 }

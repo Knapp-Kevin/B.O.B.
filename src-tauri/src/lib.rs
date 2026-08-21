@@ -29,6 +29,7 @@ pub fn run() {
             planner::plan_remaining_work,
             planner::replan_remaining_work,
             work::capture_item,
+            work::classify_inbox_item,
             work::start_current_work,
             work::defer_current_work,
             work::toggle_task_completed,

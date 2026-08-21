@@ -1,5 +1,5 @@
 import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, showToast, state, type ItemKind, type ReplanResult, type Route, type SetupStep } from "./model";
-import { applyNextActionProposal, assistWithBob, captureItem, clearHandoff, configureGeminiCredential, deferCurrentWork, exportPortableState, removeGeminiCredential, replanRemainingWork, saveCurrentHandoff, selectNextTask, startCurrentWork, toggleTaskCompleted } from "./native";
+import { applyNextActionProposal, assistWithBob, captureItem, classifyInboxItem, clearHandoff, configureGeminiCredential, deferCurrentWork, exportPortableState, removeGeminiCredential, replanRemainingWork, saveCurrentHandoff, selectNextTask, startCurrentWork, toggleTaskCompleted } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -186,17 +186,29 @@ function bindEvents() {
     render();
   }));
 
+  document.querySelectorAll<HTMLSelectElement>("[data-classify]").forEach((select) => select.addEventListener("change", () => {
+    const item = state.items.find((candidate) => candidate.id === select.dataset.classify);
+    const kind = select.value as ItemKind;
+    if (!item || item.status !== "inbox" || item.kind === kind) return;
+    void runWorkMutation(
+      () => classifyInboxItem(item.id, kind),
+      () => { item.kind = kind; },
+      `Classified as ${kind}.`
+    );
+  }));
+
   document.querySelector("#organize")?.addEventListener("click", () => {
-    const target = state.items.find((item) => item.status === "inbox" && item.kind === "task" && item.priority === "high");
+    const target = state.items.find((item) => item.status === "inbox" && item.kind === "task" && item.priority === "high")
+      ?? state.items.find((item) => item.status === "inbox" && item.kind === "task");
     if (target) {
       state.pendingProposal = {
         title: "Make one inbox item the next action",
         summary: `Move “${target.title}” into planned work and make it the next action. Leave every other inbox item untouched.`,
         targetId: target.id
       };
+      state.route = "chat";
+      pushConversation("Help me organize what is in my inbox.");
     }
-    state.route = "chat";
-    pushConversation("Help me organize what is in my inbox.");
   });
 
   document.querySelectorAll<HTMLElement>("[data-prompt]").forEach((element) => element.addEventListener("click", () => {
