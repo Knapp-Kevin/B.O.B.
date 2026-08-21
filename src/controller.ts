@@ -148,10 +148,12 @@ function bindEvents() {
       next: `Reopen the context for “${item.title}” and spend five minutes on the first concrete change.`
     };
     pushConversation("Save my place so I can resume later.");
-    showToast("Session handoff preview created.");
-    render();
+    void commitWorkState("Session handoff saved locally for restart recovery.");
   });
-  document.querySelector("#clear-handoff")?.addEventListener("click", () => { state.handoff = undefined; render(); });
+  document.querySelector("#clear-handoff")?.addEventListener("click", () => {
+    state.handoff = undefined;
+    void commitWorkState("Saved handoff cleared.");
+  });
 
   document.querySelector("#apply-proposal")?.addEventListener("click", () => {
     const proposal = state.pendingProposal;
@@ -212,12 +214,11 @@ function bindEvents() {
     void configureGeminiCredential(value)
       .then((status) => {
         state.gemini = status;
+        state.geminiStaged = status.validation === "ready";
         if (status.validation === "ready") {
-          state.geminiStaged = true;
           state.setupStep = 3;
           showToast("Gemini key validated and stored in protected OS credential storage.");
         } else {
-          if (!status.configured) state.geminiStaged = false;
           showToast(geminiFailureMessage(status.validation));
         }
       })

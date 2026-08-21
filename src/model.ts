@@ -17,6 +17,7 @@ export interface WorkItem {
 export interface PersistentWorkState {
   activeId: string | null;
   items: WorkItem[];
+  handoff: HandoffSnapshot | null;
 }
 
 export interface GeminiCredentialStatus {
@@ -90,7 +91,8 @@ export const state: AppState = {
 
 export const persistentWorkState = (): PersistentWorkState => ({
   activeId: state.activeId || null,
-  items: state.items.map((item) => ({ ...item }))
+  items: state.items.map((item) => ({ ...item })),
+  handoff: state.handoff ? { ...state.handoff } : null
 });
 
 export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
@@ -98,6 +100,7 @@ export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
   state.items = snapshot.items.map((item) => ({ ...item }));
   const requested = snapshot.activeId ? state.items.find((item) => item.id === snapshot.activeId) : undefined;
   state.activeId = requested?.id ?? state.items.find((item) => item.status === "planned")?.id ?? state.items[0]!.id;
+  state.handoff = snapshot.handoff ? { ...snapshot.handoff } : undefined;
   return true;
 };
 
