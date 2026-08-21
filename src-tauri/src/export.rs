@@ -12,7 +12,7 @@ struct PortableWorkItem {
     id: String,
     kind: String,
     title: String,
-    estimate: Option<u32>,
+    estimate: Option<i64>,
     priority: String,
     due: Option<String>,
     status: String,
