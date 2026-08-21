@@ -47,6 +47,20 @@ For changes touching the Rust/Tauri boundary, persistence, credentials, or packa
 
 A Vite/browser preview is useful for presentation work but cannot satisfy a native-boundary acceptance criterion.
 
+## Recovery failure-path evidence
+
+Persistence/recovery work must prove not only that a replacement snapshot can be created, but that failure while replacing recovery state does not destroy the last verified recovery artifact.
+
+For any bounded `pending -> promoted` recovery rotation, exercise or deterministically simulate these boundaries where the platform/tooling permits:
+
+1. pending snapshot creation failure leaves the previously promoted known-good snapshot intact;
+2. pending snapshot integrity-validation failure leaves the previously promoted known-good snapshot intact;
+3. final promotion/replacement failure leaves at least one verified recoverable snapshot intact and does not silently report success;
+4. failed candidate restore rolls canonical state back to the verified pre-restore snapshot;
+5. cleanup of stale pending artifacts cannot delete the currently promoted known-good recovery snapshot.
+
+Source review of rename/replacement code is useful but does not replace native Windows filesystem behavior where recovery correctness depends on platform replacement semantics.
+
 ## Product acceptance matrix
 
 | Surface / boundary | Required evidence |
@@ -57,7 +71,7 @@ A Vite/browser preview is useful for presentation work but cannot satisfy a nati
 | Preview-before-apply | proposal can be dismissed without mutation; apply changes only the previewed state |
 | Accessibility | keyboard reachability, visible focus, larger text, reduced motion, readable hierarchy at minimum supported window |
 | Persistence | mutation survives full quit/restart |
-| Recovery | migration/snapshot failure cannot silently reset canonical data; known-good copies survive failed snapshot creation |
+| Recovery | migration/snapshot/rotation failure cannot silently reset canonical data; known-good copies survive failed snapshot creation, validation, and promotion |
 | Credentials | set, restart/status, failed replacement preserves prior key, valid replacement, explicit removal |
 | Runtime failure | invalid auth, quota/rate limit, provider/network outage, timeout leave deterministic B.O.B. usable |
 | Rendered desktop | Today, Inbox, Chat, Settings at normal and minimum supported window sizes |
