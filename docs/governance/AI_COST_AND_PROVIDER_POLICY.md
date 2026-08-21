@@ -35,6 +35,24 @@ General default preference:
 
 For the first runnable alpha, the resolved Wayfinder route selects **Gemini Developer API Free** as the sole required inference backend. Subscription-backed and local adapters are later expansion paths, not alpha prerequisites.
 
+## Gemini Developer API Free waypoint boundary
+
+The first-alpha Gemini Free path is allowed only inside the provider boundary currently stated by Google's Gemini API Additional Terms.
+
+For context-bearing Gemini Free inference B.O.B. must:
+
+- treat the capability as intended for professional or business use, not general consumer use;
+- require a clear disclosure before the first context-bearing request that unpaid Gemini API content and responses may be used by Google to provide, improve, and develop products and machine-learning technologies and may be reviewed by humans;
+- tell the user not to send sensitive, confidential, or personal information through the unpaid inference path;
+- keep context-bearing Gemini Free inference disabled until the user affirmatively acknowledges that boundary;
+- continue deterministic Today, Inbox, planning, persistence, and other non-inference behavior when the boundary is not accepted or the provider is unavailable;
+- fail closed rather than silently switching to a paid or different provider;
+- re-verify the boundary if Google changes the applicable terms, regional availability, billing classification, or data-use policy.
+
+This restriction applies to the Gemini Free inference capability, not to B.O.B.'s local deterministic product as a whole. It does not convert B.O.B. into a business-only application. Broader personal/consumer context-bearing inference requires a later provider path or authoritative terms change that actually permits that use.
+
+The current provider authority is the Gemini API Additional Terms effective March 23, 2026. Issue #57 records the reconciliation that established this waypoint boundary.
+
 ## No silent fallback
 
 A provider failure, authentication failure, rate limit, free-quota exhaustion, subscription allowance exhaustion, local-runtime failure, or provider outage must not silently cause metered API traffic.
