@@ -1,14 +1,12 @@
 import "./styles.css";
 import { render } from "./controller";
-import { applyPlanProjection, hydratePersistentWorkState, persistentWorkState, state } from "./model";
-import { loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork, savePersistentWorkState } from "./native";
+import { applyPlanProjection, hydratePersistentWorkState, state } from "./model";
+import { loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork } from "./native";
 
 async function bootstrap() {
   try {
     const durable = await loadPersistentWorkState();
-    if (durable && !hydratePersistentWorkState(durable)) {
-      await savePersistentWorkState(persistentWorkState());
-    }
+    if (durable) hydratePersistentWorkState(durable);
   } catch (error) {
     console.error("Failed to load durable B.O.B. work state", error);
   }
