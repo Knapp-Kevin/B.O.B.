@@ -22,10 +22,19 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "style-src": "'self'",
+        "script-src": "'self'"
+      }
     }
   },
   "bundle": {
-    "active": false
+    "active": true,
+    "targets": [
+      "nsis"
+    ]
   }
 }
