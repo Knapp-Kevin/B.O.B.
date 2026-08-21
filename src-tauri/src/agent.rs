@@ -1,4 +1,7 @@
-use crate::{planner::project_remaining_work, state::{Store, WorkState}};
+use crate::{
+    planner::project_remaining_work,
+    state::{Store, WorkState},
+};
 use anyhow::{bail, Result};
 use tauri::State;
 
@@ -26,14 +29,19 @@ pub fn deterministic_assist(input: &str, state: &WorkState) -> Result<String> {
     let lower = input.to_lowercase();
     let title = &current.title;
 
-    if lower.contains("handoff") || lower.contains("resume later") || lower.contains("save my place") {
+    if lower.contains("handoff")
+        || lower.contains("resume later")
+        || lower.contains("save my place")
+    {
         return Ok(format!(
             "Handoff: {title}. Current state: {}. Next: reopen the context and spend five minutes identifying the first concrete change.",
             current.status
         ));
     }
     if lower.contains("overwhelm") || lower.contains("too much") {
-        return Ok(format!("Keep only this: {title}. Everything else can wait."));
+        return Ok(format!(
+            "Keep only this: {title}. Everything else can wait."
+        ));
     }
     if lower.contains("wait")
         || lower.contains("confus")
@@ -62,10 +70,7 @@ pub fn deterministic_assist(input: &str, state: &WorkState) -> Result<String> {
 }
 
 #[tauri::command]
-pub fn bob_assist(
-    store: State<'_, Store>,
-    input: String,
-) -> std::result::Result<String, String> {
+pub fn bob_assist(store: State<'_, Store>, input: String) -> std::result::Result<String, String> {
     let state = store.load().map_err(|error| error.to_string())?;
     deterministic_assist(&input, &state).map_err(|error| error.to_string())
 }

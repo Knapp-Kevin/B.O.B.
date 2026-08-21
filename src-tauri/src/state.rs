@@ -1,13 +1,7 @@
 use anyhow::{anyhow, bail, Context, Result};
-use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, TransactionBehavior, MAIN_DB};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs,
-    path::Path,
-    sync::Mutex,
-    time::Duration,
-};
+use std::{collections::HashSet, fs, path::Path, sync::Mutex, time::Duration};
 use tauri::State;
 
 const SCHEMA_VERSION: i64 = 3;
@@ -54,8 +48,12 @@ pub struct Store {
 
 impl Store {
     pub fn open(app_data_dir: &Path) -> Result<Self> {
-        fs::create_dir_all(app_data_dir)
-            .with_context(|| format!("create B.O.B. app-data directory at {}", app_data_dir.display()))?;
+        fs::create_dir_all(app_data_dir).with_context(|| {
+            format!(
+                "create B.O.B. app-data directory at {}",
+                app_data_dir.display()
+            )
+        })?;
 
         let db_path = app_data_dir.join(DATABASE_NAME);
         let existed_before_open = db_path.exists();
@@ -81,67 +79,7 @@ impl Store {
             .connection
             .lock()
             .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
-
-        let app_state = connection
-            .query_row(
-                "SELECT active_item_id, handoff_objective, handoff_state, handoff_next
-                 FROM app_state WHERE singleton = 1",
-                [],
-                |row| {
-                    Ok((
-                        row.get::<_, Option<String>>(0)?,
-                        row.get::<_, Option<String>>(1)?,
-                        row.get::<_, Option<String>>(2)?,
-                        row.get::<_, Option<String>>(3)?,
-                    ))
-                },
-            )
-            .optional()
-            .context("load B.O.B. application state")?
-            .unwrap_or((None, None, None, None));
-
-        let handoff = match (app_state.1, app_state.2, app_state.3) {
-            (None, None, None) => None,
-            (Some(objective), Some(state), Some(next)) => Some(HandoffSnapshot {
-                objective,
-                state,
-                next,
-            }),
-            _ => bail!("canonical handoff state is incomplete"),
-        };
-
-        let mut statement = connection
-            .prepare(
-                "SELECT id, kind, title, estimate, priority, due, status
-                 FROM work_items
-                 ORDER BY sort_order ASC, id ASC",
-            )
-            .context("prepare canonical work-state query")?;
-
-        let rows = statement
-            .query_map([], |row| {
-                Ok(WorkItem {
-                    id: row.get(0)?,
-                    kind: row.get(1)?,
-                    title: row.get(2)?,
-                    estimate: row.get(3)?,
-                    priority: row.get(4)?,
-                    due: row.get(5)?,
-                    status: row.get(6)?,
-                })
-            })
-            .context("read canonical work-state rows")?;
-
-        let items = rows
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .context("decode canonical work-state rows")?;
-        let state = WorkState {
-            active_id: app_state.0,
-            items,
-            handoff,
-        };
-        validate_work_state(&state)?;
-        Ok(state)
+        load_work_state_from_connection(&connection)
     }
 
     pub fn save(&self, state: &WorkState) -> Result<()> {
@@ -221,21 +159,7 @@ impl Store {
             .connection
             .lock()
             .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
-
-        connection
-            .query_row(
-                "SELECT larger_text, reduced_motion FROM app_state WHERE singleton = 1",
-                [],
-                |row| {
-                    Ok(AccessibilityPreferences {
-                        larger_text: row.get::<_, i64>(0)? != 0,
-                        reduced_motion: row.get::<_, i64>(1)? != 0,
-                    })
-                },
-            )
-            .optional()
-            .context("load accessibility preferences")
-            .map(|preferences| preferences.unwrap_or_default())
+        load_accessibility_preferences_from_connection(&connection)
     }
 
     pub fn save_accessibility_preferences(
@@ -260,6 +184,60 @@ impl Store {
             bail!("canonical accessibility preference row is missing");
         }
         Ok(preferences)
+    }
+
+    pub(crate) fn restore_prepared_snapshot_fail_closed(
+        &self,
+        prepared_snapshot: &Path,
+        recovery_snapshot: &Path,
+    ) -> Result<()> {
+        let mut connection = self
+            .connection
+            .lock()
+            .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
+
+        let recovery_pending = recovery_snapshot.with_file_name(".bob-pre-restore-pending.sqlite3");
+        if recovery_pending.exists() {
+            fs::remove_file(&recovery_pending).with_context(|| {
+                format!(
+                    "remove stale pending pre-restore recovery snapshot at {}",
+                    recovery_pending.display()
+                )
+            })?;
+        }
+
+        connection
+            .backup(MAIN_DB, &recovery_pending, None)
+            .context("create SQLite-consistent pending pre-restore recovery snapshot")?;
+        quick_check_path(&recovery_pending)
+            .context("verify pending pre-restore recovery snapshot before promotion")?;
+
+        promote_verified_recovery_snapshot(&recovery_pending, recovery_snapshot)?;
+
+        let restore_result = restore_connection_from_snapshot(&mut connection, prepared_snapshot)
+            .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
+            .and_then(|_| load_accessibility_preferences_from_connection(&connection).map(|_| ()));
+
+        if let Err(restore_error) = restore_result {
+            let rollback_result =
+                restore_connection_from_snapshot(&mut connection, recovery_snapshot)
+                    .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
+                    .and_then(|_| {
+                        load_accessibility_preferences_from_connection(&connection).map(|_| ())
+                    });
+
+            return match rollback_result {
+                Ok(()) => Err(restore_error).context(
+                    "restore candidate failed after canonical mutation; canonical state was rolled back to the verified pre-restore snapshot",
+                ),
+                Err(rollback_error) => Err(anyhow!(
+                    "restore failed: {restore_error:#}; rollback also failed: {rollback_error:#}; verified pre-restore snapshot retained at {}",
+                    recovery_snapshot.display()
+                )),
+            };
+        }
+
+        Ok(())
     }
 }
 
@@ -287,6 +265,108 @@ pub fn set_accessibility_preferences(
         .map_err(|error| error.to_string())
 }
 
+fn load_work_state_from_connection(connection: &Connection) -> Result<WorkState> {
+    let app_state = connection
+        .query_row(
+            "SELECT active_item_id, handoff_objective, handoff_state, handoff_next
+             FROM app_state WHERE singleton = 1",
+            [],
+            |row| {
+                Ok((
+                    row.get::<_, Option<String>>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, Option<String>>(3)?,
+                ))
+            },
+        )
+        .optional()
+        .context("load B.O.B. application state")?
+        .unwrap_or((None, None, None, None));
+
+    let handoff = match (app_state.1, app_state.2, app_state.3) {
+        (None, None, None) => None,
+        (Some(objective), Some(state), Some(next)) => Some(HandoffSnapshot {
+            objective,
+            state,
+            next,
+        }),
+        _ => bail!("canonical handoff state is incomplete"),
+    };
+
+    let mut statement = connection
+        .prepare(
+            "SELECT id, kind, title, estimate, priority, due, status
+             FROM work_items
+             ORDER BY sort_order ASC, id ASC",
+        )
+        .context("prepare canonical work-state query")?;
+
+    let rows = statement
+        .query_map([], |row| {
+            Ok(WorkItem {
+                id: row.get(0)?,
+                kind: row.get(1)?,
+                title: row.get(2)?,
+                estimate: row.get(3)?,
+                priority: row.get(4)?,
+                due: row.get(5)?,
+                status: row.get(6)?,
+            })
+        })
+        .context("read canonical work-state rows")?;
+
+    let items = rows
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .context("decode canonical work-state rows")?;
+    let state = WorkState {
+        active_id: app_state.0,
+        items,
+        handoff,
+    };
+    validate_work_state(&state)?;
+    Ok(state)
+}
+
+fn load_accessibility_preferences_from_connection(
+    connection: &Connection,
+) -> Result<AccessibilityPreferences> {
+    connection
+        .query_row(
+            "SELECT larger_text, reduced_motion FROM app_state WHERE singleton = 1",
+            [],
+            |row| {
+                Ok(AccessibilityPreferences {
+                    larger_text: row.get::<_, i64>(0)? != 0,
+                    reduced_motion: row.get::<_, i64>(1)? != 0,
+                })
+            },
+        )
+        .optional()
+        .context("load accessibility preferences")
+        .map(|preferences| preferences.unwrap_or_default())
+}
+
+fn restore_connection_from_snapshot(connection: &mut Connection, snapshot: &Path) -> Result<()> {
+    connection
+        .restore(MAIN_DB, snapshot, None::<fn(rusqlite::backup::Progress)>)
+        .with_context(|| format!("restore SQLite snapshot from {}", snapshot.display()))?;
+    connection
+        .pragma_update(None, "foreign_keys", "ON")
+        .context("re-enable SQLite foreign keys after restore")?;
+    quick_check(connection).context("verify restored SQLite integrity")?;
+
+    let version = user_version(connection)?;
+    if version != SCHEMA_VERSION {
+        bail!(
+            "prepared restore snapshot schema {} does not match running schema {}",
+            version,
+            SCHEMA_VERSION
+        );
+    }
+    Ok(())
+}
+
 fn validate_work_state(state: &WorkState) -> Result<()> {
     let mut ids = HashSet::new();
 
@@ -312,7 +392,10 @@ fn validate_work_state(state: &WorkState) -> Result<()> {
         ) {
             bail!("work item {} has an invalid status", item.id);
         }
-        if item.estimate.is_some_and(|estimate| estimate <= 0 || estimate > 10_080) {
+        if item
+            .estimate
+            .is_some_and(|estimate| estimate <= 0 || estimate > 10_080)
+        {
             bail!("work item {} has an invalid estimate", item.id);
         }
         if item.due.as_ref().is_some_and(|due| due.len() > 200) {
@@ -341,7 +424,11 @@ fn validate_work_state(state: &WorkState) -> Result<()> {
     Ok(())
 }
 
-fn run_migrations(connection: &mut Connection, db_path: &Path, existed_before_open: bool) -> Result<()> {
+fn run_migrations(
+    connection: &mut Connection,
+    db_path: &Path,
+    existed_before_open: bool,
+) -> Result<()> {
     let initial_version = user_version(connection)?;
     if initial_version > SCHEMA_VERSION {
         bail!(
@@ -446,9 +533,19 @@ fn quick_check(connection: &Connection) -> Result<()> {
 }
 
 fn quick_check_path(path: &Path) -> Result<()> {
-    let connection = Connection::open(path)
-        .with_context(|| format!("open recovery snapshot at {}", path.display()))?;
+    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .with_context(|| format!("open recovery snapshot read-only at {}", path.display()))?;
     quick_check(&connection)
+}
+
+fn promote_verified_recovery_snapshot(pending: &Path, target: &Path) -> Result<()> {
+    fs::rename(pending, target).with_context(|| {
+        format!(
+            "promote verified pre-restore recovery snapshot from {} to {} while preserving the prior target if replacement fails",
+            pending.display(),
+            target.display()
+        )
+    })
 }
 
 fn create_pre_migration_safety_copy(connection: &Connection, db_path: &Path) -> Result<()> {
@@ -533,10 +630,7 @@ mod tests {
             reduced_motion: true,
         };
 
-        assert_eq!(
-            store.save_accessibility_preferences(expected)?,
-            expected
-        );
+        assert_eq!(store.save_accessibility_preferences(expected)?, expected);
         assert_eq!(store.load_accessibility_preferences()?, expected);
         Ok(())
     }
@@ -550,6 +644,33 @@ mod tests {
 
         assert!(store.save(&invalid).is_err());
         assert!(store.load()?.items.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn failed_recovery_promotion_preserves_existing_snapshot() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let pending = directory.path().join("missing-pending.sqlite3");
+        let target = directory.path().join("bob-pre-restore-last.sqlite3");
+        fs::write(&target, b"known-good")?;
+
+        assert!(promote_verified_recovery_snapshot(&pending, &target).is_err());
+        assert_eq!(fs::read(&target)?, b"known-good");
+        Ok(())
+    }
+
+    #[test]
+    fn recovery_promotion_replaces_existing_snapshot_without_delete_window() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let pending = directory.path().join("pending.sqlite3");
+        let target = directory.path().join("bob-pre-restore-last.sqlite3");
+        fs::write(&pending, b"new-known-good")?;
+        fs::write(&target, b"old-known-good")?;
+
+        promote_verified_recovery_snapshot(&pending, &target)?;
+
+        assert!(!pending.exists());
+        assert_eq!(fs::read(&target)?, b"new-known-good");
         Ok(())
     }
 
@@ -612,7 +733,8 @@ mod tests {
             .join("bob-pre-migration-1.sqlite3");
         assert!(safety_copy.exists());
         let copy = Connection::open(safety_copy)?;
-        let marker: String = copy.query_row("SELECT value FROM legacy_marker", [], |row| row.get(0))?;
+        let marker: String =
+            copy.query_row("SELECT value FROM legacy_marker", [], |row| row.get(0))?;
         assert_eq!(marker, "keep-me");
         Ok(())
     }

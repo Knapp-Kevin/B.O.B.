@@ -106,11 +106,10 @@ pub fn classify_inbox_item(
 }
 
 #[tauri::command]
-pub fn start_current_work(
-    store: State<'_, Store>,
-) -> std::result::Result<ReplanResult, String> {
+pub fn start_current_work(store: State<'_, Store>) -> std::result::Result<ReplanResult, String> {
     let mut state = store.load().map_err(|error| error.to_string())?;
-    let target_id = current_planned_id(&state).ok_or_else(|| "no planned task is available to start".to_string())?;
+    let target_id = current_planned_id(&state)
+        .ok_or_else(|| "no planned task is available to start".to_string())?;
     let target = state
         .items
         .iter_mut()
@@ -125,11 +124,10 @@ pub fn start_current_work(
 }
 
 #[tauri::command]
-pub fn defer_current_work(
-    store: State<'_, Store>,
-) -> std::result::Result<ReplanResult, String> {
+pub fn defer_current_work(store: State<'_, Store>) -> std::result::Result<ReplanResult, String> {
     let mut state = store.load().map_err(|error| error.to_string())?;
-    let target_id = current_planned_id(&state).ok_or_else(|| "no planned task is available to defer".to_string())?;
+    let target_id = current_planned_id(&state)
+        .ok_or_else(|| "no planned task is available to defer".to_string())?;
     let target = state
         .items
         .iter_mut()
@@ -181,7 +179,11 @@ pub fn select_next_task(
     match target.status.as_str() {
         "inbox" => target.status = "planned".into(),
         "planned" | "doing" => {}
-        "done" | "deferred" => return Err("completed or deferred work requires an explicit lifecycle change first".into()),
+        "done" | "deferred" => {
+            return Err(
+                "completed or deferred work requires an explicit lifecycle change first".into(),
+            )
+        }
         _ => return Err("task is not eligible for next-action selection".into()),
     }
     state.active_id = Some(item_id);
@@ -189,11 +191,10 @@ pub fn select_next_task(
 }
 
 #[tauri::command]
-pub fn save_current_handoff(
-    store: State<'_, Store>,
-) -> std::result::Result<ReplanResult, String> {
+pub fn save_current_handoff(store: State<'_, Store>) -> std::result::Result<ReplanResult, String> {
     let mut state = store.load().map_err(|error| error.to_string())?;
-    let target_id = current_planned_id(&state).ok_or_else(|| "no current task is available to save".to_string())?;
+    let target_id = current_planned_id(&state)
+        .ok_or_else(|| "no current task is available to save".to_string())?;
     let target = state
         .items
         .iter()
@@ -217,9 +218,7 @@ pub fn save_current_handoff(
 }
 
 #[tauri::command]
-pub fn clear_handoff(
-    store: State<'_, Store>,
-) -> std::result::Result<ReplanResult, String> {
+pub fn clear_handoff(store: State<'_, Store>) -> std::result::Result<ReplanResult, String> {
     let mut state = store.load().map_err(|error| error.to_string())?;
     state.handoff = None;
     persist_normalized(&store, state).map_err(|error| error.to_string())
@@ -300,12 +299,20 @@ mod tests {
         })?;
 
         let mut state = store.load()?;
-        let target = state.items.iter_mut().find(|item| item.id == "captured").unwrap();
+        let target = state
+            .items
+            .iter_mut()
+            .find(|item| item.id == "captured")
+            .unwrap();
         target.kind = "task".into();
         persist_normalized(&store, state)?;
 
         let persisted = store.load()?;
-        let target = persisted.items.iter().find(|item| item.id == "captured").unwrap();
+        let target = persisted
+            .items
+            .iter()
+            .find(|item| item.id == "captured")
+            .unwrap();
         assert_eq!(target.kind, "task");
         assert_eq!(target.status, "inbox");
         assert_eq!(persisted.active_id, None);
