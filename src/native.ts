@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { GeminiCredentialStatus, ItemKind, PersistentWorkState, PlanProjection, ReplanResult } from "./model";
+import type { AccessibilityPreferences, GeminiCredentialStatus, ItemKind, PersistentWorkState, PlanProjection, ReplanResult } from "./model";
 
 const isTauriRuntime = () => "__TAURI_INTERNALS__" in window;
 const browserGeminiStatus: GeminiCredentialStatus = { configured: false, validation: "notConfigured" };
@@ -7,6 +7,16 @@ const browserGeminiStatus: GeminiCredentialStatus = { configured: false, validat
 export async function loadPersistentWorkState(): Promise<PersistentWorkState | null> {
   if (!isTauriRuntime()) return null;
   return invoke<PersistentWorkState>("load_work_state");
+}
+
+export async function loadAccessibilityPreferences(): Promise<AccessibilityPreferences | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<AccessibilityPreferences>("load_accessibility_preferences");
+}
+
+export async function setAccessibilityPreferences(preferences: AccessibilityPreferences): Promise<AccessibilityPreferences | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<AccessibilityPreferences>("set_accessibility_preferences", { preferences });
 }
 
 export async function planRemainingWork(): Promise<PlanProjection | null> {
