@@ -1,5 +1,5 @@
 import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, showToast, state, type ItemKind, type ReplanResult, type Route, type SetupStep } from "./model";
-import { applyNextActionProposal, assistWithBob, captureItem, clearHandoff, configureGeminiCredential, deferCurrentWork, exportPortableState, planRemainingWork, removeGeminiCredential, replanRemainingWork, saveCurrentHandoff, selectNextTask, startCurrentWork, toggleTaskCompleted } from "./native";
+import { applyNextActionProposal, assistWithBob, captureItem, clearHandoff, configureGeminiCredential, deferCurrentWork, exportPortableState, removeGeminiCredential, replanRemainingWork, saveCurrentHandoff, selectNextTask, startCurrentWork, toggleTaskCompleted } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
