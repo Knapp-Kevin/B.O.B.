@@ -1,4 +1,4 @@
-use crate::state::{Store, WorkState};
+use crate::{planner::project_remaining_work, state::{Store, WorkState}};
 use anyhow::{bail, Result};
 use tauri::State;
 
@@ -13,16 +13,11 @@ pub fn deterministic_assist(input: &str, state: &WorkState) -> Result<String> {
         bail!("assist input is too long");
     }
 
-    let current = state
-        .active_id
+    let plan = project_remaining_work(state);
+    let current = plan
+        .next_id
         .as_deref()
-        .and_then(|id| state.items.iter().find(|item| item.id == id))
-        .or_else(|| {
-            state
-                .items
-                .iter()
-                .find(|item| matches!(item.status.as_str(), "doing" | "planned"))
-        });
+        .and_then(|id| state.items.iter().find(|item| item.id == id));
 
     let Some(current) = current else {
         return Ok("Nothing is currently planned. Capture the messy version first, and B.O.B. will help turn it into one useful next move.".into());
@@ -108,6 +103,24 @@ mod tests {
         let response = deterministic_assist("I am overwhelmed", &state())?;
         assert!(response.contains("Write the project outline"));
         assert!(response.contains("Everything else can wait"));
+        Ok(())
+    }
+
+    #[test]
+    fn ignores_stale_completed_active_pointer() -> Result<()> {
+        let stale = WorkState {
+            active_id: Some("done".into()),
+            items: vec![
+                item("done", "Finished task", "done"),
+                item("next", "Actual remaining task", "planned"),
+            ],
+            handoff: None,
+        };
+
+        let response = deterministic_assist("What next?", &stale)?;
+
+        assert!(response.contains("Actual remaining task"));
+        assert!(!response.contains("Finished task"));
         Ok(())
     }
 

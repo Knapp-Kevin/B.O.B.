@@ -24,7 +24,9 @@ pub fn project_remaining_work(state: &WorkState) -> PlanProjection {
         .items
         .iter()
         .enumerate()
-        .filter(|(_, item)| matches!(item.status.as_str(), "doing" | "planned"))
+        .filter(|(_, item)| {
+            item.kind == "task" && matches!(item.status.as_str(), "doing" | "planned")
+        })
         .collect::<Vec<_>>();
 
     candidates.sort_by_key(|(index, item)| {
@@ -125,13 +127,16 @@ mod tests {
     }
 
     #[test]
-    fn excludes_completed_deferred_and_inbox_work_and_caps_focus() {
+    fn excludes_completed_deferred_inbox_and_non_task_work_and_caps_focus() {
+        let mut note = item("note", "planned", "high", Some("Today"));
+        note.kind = "note".into();
         let state = state(
             Some("done"),
             vec![
                 item("done", "done", "high", Some("Today")),
                 item("deferred", "deferred", "high", Some("Today")),
                 item("inbox", "inbox", "high", Some("Today")),
+                note,
                 item("doing", "doing", "normal", None),
                 item("today", "planned", "high", Some("Today")),
                 item("normal", "planned", "normal", None),

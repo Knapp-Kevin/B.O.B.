@@ -48,7 +48,7 @@ pub struct GeminiCredentials {
 
 impl GeminiCredentials {
     pub fn new() -> Result<Self> {
-        Self::with_secret_store(Arc::new(OsSecretStore))
+        Self::with_secret_store(Arc::new(OsSecretStore::default()))
     }
 
     fn with_secret_store(secrets: Arc<dyn SecretStore>) -> Result<Self> {
