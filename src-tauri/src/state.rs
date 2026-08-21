@@ -10,7 +10,7 @@ use std::{
 };
 use tauri::State;
 
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 3;
 const DATABASE_NAME: &str = "bob.sqlite3";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,9 +27,25 @@ pub struct WorkItem {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct HandoffSnapshot {
+    pub objective: String,
+    pub state: String,
+    pub next: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorkState {
     pub active_id: Option<String>,
     pub items: Vec<WorkItem>,
+    pub handoff: Option<HandoffSnapshot>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessibilityPreferences {
+    pub larger_text: bool,
+    pub reduced_motion: bool,
 }
 
 pub struct Store {
@@ -66,15 +82,33 @@ impl Store {
             .lock()
             .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
 
-        let active_id = connection
+        let app_state = connection
             .query_row(
-                "SELECT active_item_id FROM app_state WHERE singleton = 1",
+                "SELECT active_item_id, handoff_objective, handoff_state, handoff_next
+                 FROM app_state WHERE singleton = 1",
                 [],
-                |row| row.get::<_, Option<String>>(0),
+                |row| {
+                    Ok((
+                        row.get::<_, Option<String>>(0)?,
+                        row.get::<_, Option<String>>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                        row.get::<_, Option<String>>(3)?,
+                    ))
+                },
             )
             .optional()
-            .context("load active B.O.B. item")?
-            .flatten();
+            .context("load B.O.B. application state")?
+            .unwrap_or((None, None, None, None));
+
+        let handoff = match (app_state.1, app_state.2, app_state.3) {
+            (None, None, None) => None,
+            (Some(objective), Some(state), Some(next)) => Some(HandoffSnapshot {
+                objective,
+                state,
+                next,
+            }),
+            _ => bail!("canonical handoff state is incomplete"),
+        };
 
         let mut statement = connection
             .prepare(
@@ -101,7 +135,11 @@ impl Store {
         let items = rows
             .collect::<std::result::Result<Vec<_>, _>>()
             .context("decode canonical work-state rows")?;
-        let state = WorkState { active_id, items };
+        let state = WorkState {
+            active_id: app_state.0,
+            items,
+            handoff,
+        };
         validate_work_state(&state)?;
         Ok(state)
     }
@@ -141,19 +179,87 @@ impl Store {
                 .with_context(|| format!("persist work item {}", item.id))?;
         }
 
+        let (handoff_objective, handoff_state, handoff_next) = state
+            .handoff
+            .as_ref()
+            .map(|handoff| {
+                (
+                    Some(handoff.objective.as_str()),
+                    Some(handoff.state.as_str()),
+                    Some(handoff.next.as_str()),
+                )
+            })
+            .unwrap_or((None, None, None));
+
         transaction
             .execute(
-                "INSERT INTO app_state (singleton, active_item_id)
-                 VALUES (1, ?1)
-                 ON CONFLICT(singleton) DO UPDATE SET active_item_id = excluded.active_item_id",
-                params![state.active_id.as_deref()],
+                "INSERT INTO app_state
+                    (singleton, active_item_id, handoff_objective, handoff_state, handoff_next)
+                 VALUES (1, ?1, ?2, ?3, ?4)
+                 ON CONFLICT(singleton) DO UPDATE SET
+                    active_item_id = excluded.active_item_id,
+                    handoff_objective = excluded.handoff_objective,
+                    handoff_state = excluded.handoff_state,
+                    handoff_next = excluded.handoff_next",
+                params![
+                    state.active_id.as_deref(),
+                    handoff_objective,
+                    handoff_state,
+                    handoff_next
+                ],
             )
-            .context("persist active B.O.B. item")?;
+            .context("persist B.O.B. application state")?;
 
         transaction
             .commit()
             .context("commit canonical work-state transaction")?;
         Ok(())
+    }
+
+    pub fn load_accessibility_preferences(&self) -> Result<AccessibilityPreferences> {
+        let connection = self
+            .connection
+            .lock()
+            .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
+
+        connection
+            .query_row(
+                "SELECT larger_text, reduced_motion FROM app_state WHERE singleton = 1",
+                [],
+                |row| {
+                    Ok(AccessibilityPreferences {
+                        larger_text: row.get::<_, i64>(0)? != 0,
+                        reduced_motion: row.get::<_, i64>(1)? != 0,
+                    })
+                },
+            )
+            .optional()
+            .context("load accessibility preferences")
+            .map(|preferences| preferences.unwrap_or_default())
+    }
+
+    pub fn save_accessibility_preferences(
+        &self,
+        preferences: AccessibilityPreferences,
+    ) -> Result<AccessibilityPreferences> {
+        let connection = self
+            .connection
+            .lock()
+            .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
+        let larger_text = if preferences.larger_text { 1 } else { 0 };
+        let reduced_motion = if preferences.reduced_motion { 1 } else { 0 };
+        let changed = connection
+            .execute(
+                "UPDATE app_state
+                 SET larger_text = ?1, reduced_motion = ?2
+                 WHERE singleton = 1",
+                params![larger_text, reduced_motion],
+            )
+            .context("persist accessibility preferences")?;
+        if changed != 1 {
+            bail!("canonical accessibility preference row is missing");
+        }
+        Ok(preferences)
     }
 }
 
@@ -163,12 +269,22 @@ pub fn load_work_state(store: State<'_, Store>) -> std::result::Result<WorkState
 }
 
 #[tauri::command]
-pub fn save_work_state(
+pub fn load_accessibility_preferences(
     store: State<'_, Store>,
-    work_state: WorkState,
-) -> std::result::Result<WorkState, String> {
-    store.save(&work_state).map_err(|error| error.to_string())?;
-    store.load().map_err(|error| error.to_string())
+) -> std::result::Result<AccessibilityPreferences, String> {
+    store
+        .load_accessibility_preferences()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn set_accessibility_preferences(
+    store: State<'_, Store>,
+    preferences: AccessibilityPreferences,
+) -> std::result::Result<AccessibilityPreferences, String> {
+    store
+        .save_accessibility_preferences(preferences)
+        .map_err(|error| error.to_string())
 }
 
 fn validate_work_state(state: &WorkState) -> Result<()> {
@@ -210,20 +326,32 @@ fn validate_work_state(state: &WorkState) -> Result<()> {
         }
     }
 
+    if let Some(handoff) = &state.handoff {
+        if handoff.objective.trim().is_empty() || handoff.objective.len() > 500 {
+            bail!("handoff objective is missing or too long");
+        }
+        if handoff.state.trim().is_empty() || handoff.state.len() > 200 {
+            bail!("handoff state is missing or too long");
+        }
+        if handoff.next.trim().is_empty() || handoff.next.len() > 1_000 {
+            bail!("handoff next action is missing or too long");
+        }
+    }
+
     Ok(())
 }
 
 fn run_migrations(connection: &mut Connection, db_path: &Path, existed_before_open: bool) -> Result<()> {
-    let version = user_version(connection)?;
-    if version > SCHEMA_VERSION {
+    let initial_version = user_version(connection)?;
+    if initial_version > SCHEMA_VERSION {
         bail!(
             "canonical state schema {} is newer than supported schema {}; refusing destructive downgrade",
-            version,
+            initial_version,
             SCHEMA_VERSION
         );
     }
 
-    if version == SCHEMA_VERSION {
+    if initial_version == SCHEMA_VERSION {
         quick_check(connection)?;
         return Ok(());
     }
@@ -233,43 +361,67 @@ fn run_migrations(connection: &mut Connection, db_path: &Path, existed_before_op
         create_pre_migration_safety_copy(connection, db_path)?;
     }
 
-    let transaction = connection
-        .transaction_with_behavior(TransactionBehavior::Immediate)
-        .context("begin schema migration transaction")?;
+    let mut version = initial_version;
+    while version < SCHEMA_VERSION {
+        let transaction = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .context("begin schema migration transaction")?;
 
-    match version {
-        0 => transaction
-            .execute_batch(
-                "CREATE TABLE IF NOT EXISTS work_items (
-                    id TEXT PRIMARY KEY NOT NULL,
-                    kind TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    estimate INTEGER,
-                    priority TEXT NOT NULL,
-                    due TEXT,
-                    status TEXT NOT NULL,
-                    sort_order INTEGER NOT NULL
-                );
+        match version {
+            0 => transaction
+                .execute_batch(
+                    "CREATE TABLE IF NOT EXISTS work_items (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        kind TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        estimate INTEGER,
+                        priority TEXT NOT NULL,
+                        due TEXT,
+                        status TEXT NOT NULL,
+                        sort_order INTEGER NOT NULL
+                    );
 
-                CREATE TABLE IF NOT EXISTS app_state (
-                    singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
-                    active_item_id TEXT REFERENCES work_items(id) ON DELETE SET NULL
-                );
+                    CREATE TABLE IF NOT EXISTS app_state (
+                        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+                        active_item_id TEXT REFERENCES work_items(id) ON DELETE SET NULL
+                    );
 
-                INSERT OR IGNORE INTO app_state (singleton, active_item_id) VALUES (1, NULL);
-                PRAGMA user_version = 1;",
-            )
-            .context("apply schema migration 1")?,
-        other => bail!("no migration path exists from schema version {}", other),
+                    INSERT OR IGNORE INTO app_state (singleton, active_item_id) VALUES (1, NULL);
+                    PRAGMA user_version = 1;",
+                )
+                .context("apply schema migration 1")?,
+            1 => transaction
+                .execute_batch(
+                    "ALTER TABLE app_state ADD COLUMN handoff_objective TEXT;
+                     ALTER TABLE app_state ADD COLUMN handoff_state TEXT;
+                     ALTER TABLE app_state ADD COLUMN handoff_next TEXT;
+                     PRAGMA user_version = 2;",
+                )
+                .context("apply schema migration 2")?,
+            2 => transaction
+                .execute_batch(
+                    "ALTER TABLE app_state ADD COLUMN larger_text INTEGER NOT NULL DEFAULT 0
+                        CHECK (larger_text IN (0, 1));
+                     ALTER TABLE app_state ADD COLUMN reduced_motion INTEGER NOT NULL DEFAULT 0
+                        CHECK (reduced_motion IN (0, 1));
+                     PRAGMA user_version = 3;",
+                )
+                .context("apply schema migration 3")?,
+            other => bail!("no migration path exists from schema version {}", other),
+        }
+
+        transaction.commit().context("commit schema migration")?;
+        let next_version = user_version(connection)?;
+        if next_version <= version {
+            bail!("schema migration did not advance from version {}", version);
+        }
+        version = next_version;
     }
 
-    transaction.commit().context("commit schema migration")?;
-
-    let resulting_version = user_version(connection)?;
-    if resulting_version != SCHEMA_VERSION {
+    if version != SCHEMA_VERSION {
         bail!(
             "schema migration ended at version {}, expected {}",
-            resulting_version,
+            version,
             SCHEMA_VERSION
         );
     }
@@ -352,11 +504,16 @@ mod tests {
                 due: Some("Today".into()),
                 status: "planned".into(),
             }],
+            handoff: Some(HandoffSnapshot {
+                objective: "First durable task".into(),
+                state: "In progress".into(),
+                next: "Reopen the context and make the first concrete change.".into(),
+            }),
         }
     }
 
     #[test]
-    fn round_trips_work_state() -> Result<()> {
+    fn round_trips_work_state_and_handoff() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let store = Store::open(directory.path())?;
         let expected = sample_state();
@@ -368,7 +525,24 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_active_item() -> Result<()> {
+    fn round_trips_accessibility_preferences() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let store = Store::open(directory.path())?;
+        let expected = AccessibilityPreferences {
+            larger_text: true,
+            reduced_motion: true,
+        };
+
+        assert_eq!(
+            store.save_accessibility_preferences(expected)?,
+            expected
+        );
+        assert_eq!(store.load_accessibility_preferences()?, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unknown_active_item_without_mutating_state() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let store = Store::open(directory.path())?;
         let mut invalid = sample_state();
@@ -376,6 +550,48 @@ mod tests {
 
         assert!(store.save(&invalid).is_err());
         assert!(store.load()?.items.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn migrates_v1_state_to_v3_without_losing_work() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let db_path = directory.path().join(DATABASE_NAME);
+        let legacy = Connection::open(&db_path)?;
+        legacy.execute_batch(
+            "CREATE TABLE work_items (
+                id TEXT PRIMARY KEY NOT NULL,
+                kind TEXT NOT NULL,
+                title TEXT NOT NULL,
+                estimate INTEGER,
+                priority TEXT NOT NULL,
+                due TEXT,
+                status TEXT NOT NULL,
+                sort_order INTEGER NOT NULL
+             );
+             CREATE TABLE app_state (
+                singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+                active_item_id TEXT REFERENCES work_items(id) ON DELETE SET NULL
+             );
+             INSERT INTO work_items
+                (id, kind, title, estimate, priority, due, status, sort_order)
+             VALUES ('one', 'task', 'Preserve me', 15, 'high', 'Today', 'planned', 0);
+             INSERT INTO app_state (singleton, active_item_id) VALUES (1, 'one');
+             PRAGMA user_version = 1;",
+        )?;
+        drop(legacy);
+
+        let store = Store::open(directory.path())?;
+        let migrated = store.load()?;
+
+        assert_eq!(migrated.active_id.as_deref(), Some("one"));
+        assert_eq!(migrated.items.len(), 1);
+        assert_eq!(migrated.items[0].title, "Preserve me");
+        assert_eq!(migrated.handoff, None);
+        assert_eq!(
+            store.load_accessibility_preferences()?,
+            AccessibilityPreferences::default()
+        );
         Ok(())
     }
 

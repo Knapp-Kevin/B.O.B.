@@ -2,6 +2,7 @@ export type Route = "today" | "inbox" | "chat" | "settings";
 export type ItemKind = "task" | "idea" | "note" | "reminder";
 export type ItemStatus = "inbox" | "planned" | "doing" | "done" | "deferred";
 export type SetupStep = 1 | 2 | 3;
+export type GeminiValidationState = "notConfigured" | "ready" | "invalidCredential" | "quotaLimited" | "unavailable";
 
 export interface WorkItem {
   id: string;
@@ -16,6 +17,27 @@ export interface WorkItem {
 export interface PersistentWorkState {
   activeId: string | null;
   items: WorkItem[];
+  handoff: HandoffSnapshot | null;
+}
+
+export interface PlanProjection {
+  nextId: string | null;
+  focusIds: string[];
+}
+
+export interface ReplanResult {
+  workState: PersistentWorkState;
+  plan: PlanProjection;
+}
+
+export interface AccessibilityPreferences {
+  largerText: boolean;
+  reducedMotion: boolean;
+}
+
+export interface GeminiCredentialStatus {
+  configured: boolean;
+  validation: GeminiValidationState;
 }
 
 export interface ChatMessage {
@@ -39,12 +61,15 @@ export interface AppState {
   route: Route;
   reduced: boolean;
   activeId: string;
+  focusIds: string[];
   filter: "all" | ItemKind;
   items: WorkItem[];
   chat: ChatMessage[];
   setupOpen: boolean;
   setupStep: SetupStep;
+  gemini: GeminiCredentialStatus;
   geminiStaged: boolean;
+  geminiBusy: boolean;
   largerText: boolean;
   reducedMotion: boolean;
   toast: string;
@@ -52,7 +77,9 @@ export interface AppState {
   handoff?: HandoffSnapshot;
 }
 
-const seedItems: WorkItem[] = [
+// Browser-only preview fixtures. Native bootstrap replaces these with canonical SQLite state,
+// including a genuinely empty first-run database.
+const previewSeedItems: WorkItem[] = [
   { id: "reply", kind: "task", title: "Reply to Jamie about the project brief", estimate: 10, priority: "high", due: "Today", status: "planned" },
   { id: "outline", kind: "task", title: "Finish Q2 project outline", estimate: 90, priority: "high", due: "Friday", status: "planned" },
   { id: "client", kind: "task", title: "Client check-in", estimate: 45, priority: "normal", due: "11:15 AM", status: "planned" },
@@ -67,32 +94,59 @@ export const state: AppState = {
   route: "today",
   reduced: false,
   activeId: "reply",
+  focusIds: [],
   filter: "all",
-  items: seedItems,
+  items: previewSeedItems,
   chat: [{ author: "bob", text: "Give me the messy version. I’ll help you find the next useful move." }],
   setupOpen: false,
   setupStep: 1,
+  gemini: { configured: false, validation: "notConfigured" },
   geminiStaged: false,
+  geminiBusy: false,
   largerText: false,
   reducedMotion: false,
   toast: ""
 };
 
-export const persistentWorkState = (): PersistentWorkState => ({
-  activeId: state.activeId || null,
-  items: state.items.map((item) => ({ ...item }))
-});
-
 export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
-  if (snapshot.items.length === 0) return false;
   state.items = snapshot.items.map((item) => ({ ...item }));
   const requested = snapshot.activeId ? state.items.find((item) => item.id === snapshot.activeId) : undefined;
-  state.activeId = requested?.id ?? state.items.find((item) => item.status === "planned")?.id ?? state.items[0]!.id;
-  return true;
+  state.activeId = requested?.id ?? "";
+  state.focusIds = [];
+  state.handoff = snapshot.handoff ? { ...snapshot.handoff } : undefined;
 };
 
-export const activeItem = () => state.items.find((item) => item.id === state.activeId) ?? state.items.find((item) => item.status === "planned") ?? state.items[0]!;
-export const focusItems = () => ["outline", "client", "workout"].map((id) => state.items.find((item) => item.id === id)).filter((item): item is WorkItem => Boolean(item));
+export const applyAccessibilityPreferences = (preferences: AccessibilityPreferences) => {
+  state.largerText = preferences.largerText;
+  state.reducedMotion = preferences.reducedMotion;
+};
+
+export const currentAccessibilityPreferences = (): AccessibilityPreferences => ({
+  largerText: state.largerText,
+  reducedMotion: state.reducedMotion
+});
+
+export const applyPlanProjection = (plan: PlanProjection) => {
+  state.focusIds = plan.focusIds.filter((id) => state.items.some((item) => item.id === id));
+  state.activeId = plan.nextId && state.items.some((item) => item.id === plan.nextId) ? plan.nextId : "";
+};
+
+export const activeItem = () => state.items.find((item) => item.id === state.activeId)
+  ?? state.items.find((item) => item.kind === "task" && (item.status === "doing" || item.status === "planned"));
+
+export const focusItems = () => {
+  const projected = state.focusIds
+    .map((id) => state.items.find((item) => item.id === id))
+    .filter((item): item is WorkItem => item !== undefined && item.kind === "task");
+  if (projected.length) return projected.slice(0, 3);
+
+  const eligible = state.items.filter((item) => item.kind === "task" && (item.status === "doing" || item.status === "planned"));
+  const active = eligible.find((item) => item.id === state.activeId);
+  return [active, ...eligible.filter((item) => item.id !== active?.id)]
+    .filter((item): item is WorkItem => item !== undefined)
+    .slice(0, 3);
+};
+
 export const escapeHtml = (value: string) => value.replace(/[&<>'\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '\"': "&quot;" })[character]!);
 
 let toastTimer: number | undefined;

@@ -4,6 +4,7 @@ version = "0.0.1"
 description = "B.O.B. | Better Organized Brain"
 authors = ["Kevin Knapp"]
 edition = "2021"
+rust-version = "1.88"
 
 [lib]
 name = "bob_lib"
@@ -14,10 +15,13 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 anyhow = "1"
+keyring = "4.1.6"
+reqwest = "0.13.4"
 rusqlite = { version = "0.40", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
+zeroize = "1.9"
 
 [dev-dependencies]
 tempfile = "3"
