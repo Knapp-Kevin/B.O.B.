@@ -30,6 +30,11 @@ export interface ReplanResult {
   plan: PlanProjection;
 }
 
+export interface AccessibilityPreferences {
+  largerText: boolean;
+  reducedMotion: boolean;
+}
+
 export interface GeminiCredentialStatus {
   configured: boolean;
   validation: GeminiValidationState;
@@ -103,12 +108,6 @@ export const state: AppState = {
   toast: ""
 };
 
-export const persistentWorkState = (): PersistentWorkState => ({
-  activeId: state.activeId || null,
-  items: state.items.map((item) => ({ ...item })),
-  handoff: state.handoff ? { ...state.handoff } : null
-});
-
 export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
   state.items = snapshot.items.map((item) => ({ ...item }));
   const requested = snapshot.activeId ? state.items.find((item) => item.id === snapshot.activeId) : undefined;
@@ -116,6 +115,16 @@ export const hydratePersistentWorkState = (snapshot: PersistentWorkState) => {
   state.focusIds = [];
   state.handoff = snapshot.handoff ? { ...snapshot.handoff } : undefined;
 };
+
+export const applyAccessibilityPreferences = (preferences: AccessibilityPreferences) => {
+  state.largerText = preferences.largerText;
+  state.reducedMotion = preferences.reducedMotion;
+};
+
+export const currentAccessibilityPreferences = (): AccessibilityPreferences => ({
+  largerText: state.largerText,
+  reducedMotion: state.reducedMotion
+});
 
 export const applyPlanProjection = (plan: PlanProjection) => {
   state.focusIds = plan.focusIds.filter((id) => state.items.some((item) => item.id === id));

@@ -10,7 +10,7 @@ use std::{
 };
 use tauri::State;
 
-const SCHEMA_VERSION: i64 = 2;
+const SCHEMA_VERSION: i64 = 3;
 const DATABASE_NAME: &str = "bob.sqlite3";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -39,6 +39,13 @@ pub struct WorkState {
     pub active_id: Option<String>,
     pub items: Vec<WorkItem>,
     pub handoff: Option<HandoffSnapshot>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessibilityPreferences {
+    pub larger_text: bool,
+    pub reduced_motion: bool,
 }
 
 pub struct Store {
@@ -208,6 +215,52 @@ impl Store {
             .context("commit canonical work-state transaction")?;
         Ok(())
     }
+
+    pub fn load_accessibility_preferences(&self) -> Result<AccessibilityPreferences> {
+        let connection = self
+            .connection
+            .lock()
+            .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
+
+        connection
+            .query_row(
+                "SELECT larger_text, reduced_motion FROM app_state WHERE singleton = 1",
+                [],
+                |row| {
+                    Ok(AccessibilityPreferences {
+                        larger_text: row.get::<_, i64>(0)? != 0,
+                        reduced_motion: row.get::<_, i64>(1)? != 0,
+                    })
+                },
+            )
+            .optional()
+            .context("load accessibility preferences")
+            .map(|preferences| preferences.unwrap_or_default())
+    }
+
+    pub fn save_accessibility_preferences(
+        &self,
+        preferences: AccessibilityPreferences,
+    ) -> Result<AccessibilityPreferences> {
+        let connection = self
+            .connection
+            .lock()
+            .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
+        let larger_text = if preferences.larger_text { 1 } else { 0 };
+        let reduced_motion = if preferences.reduced_motion { 1 } else { 0 };
+        let changed = connection
+            .execute(
+                "UPDATE app_state
+                 SET larger_text = ?1, reduced_motion = ?2
+                 WHERE singleton = 1",
+                params![larger_text, reduced_motion],
+            )
+            .context("persist accessibility preferences")?;
+        if changed != 1 {
+            bail!("canonical accessibility preference row is missing");
+        }
+        Ok(preferences)
+    }
 }
 
 #[tauri::command]
@@ -216,12 +269,22 @@ pub fn load_work_state(store: State<'_, Store>) -> std::result::Result<WorkState
 }
 
 #[tauri::command]
-pub fn save_work_state(
+pub fn load_accessibility_preferences(
     store: State<'_, Store>,
-    work_state: WorkState,
-) -> std::result::Result<WorkState, String> {
-    store.save(&work_state).map_err(|error| error.to_string())?;
-    store.load().map_err(|error| error.to_string())
+) -> std::result::Result<AccessibilityPreferences, String> {
+    store
+        .load_accessibility_preferences()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn set_accessibility_preferences(
+    store: State<'_, Store>,
+    preferences: AccessibilityPreferences,
+) -> std::result::Result<AccessibilityPreferences, String> {
+    store
+        .save_accessibility_preferences(preferences)
+        .map_err(|error| error.to_string())
 }
 
 fn validate_work_state(state: &WorkState) -> Result<()> {
@@ -335,16 +398,22 @@ fn run_migrations(connection: &mut Connection, db_path: &Path, existed_before_op
                      PRAGMA user_version = 2;",
                 )
                 .context("apply schema migration 2")?,
+            2 => transaction
+                .execute_batch(
+                    "ALTER TABLE app_state ADD COLUMN larger_text INTEGER NOT NULL DEFAULT 0
+                        CHECK (larger_text IN (0, 1));
+                     ALTER TABLE app_state ADD COLUMN reduced_motion INTEGER NOT NULL DEFAULT 0
+                        CHECK (reduced_motion IN (0, 1));
+                     PRAGMA user_version = 3;",
+                )
+                .context("apply schema migration 3")?,
             other => bail!("no migration path exists from schema version {}", other),
         }
 
         transaction.commit().context("commit schema migration")?;
         let next_version = user_version(connection)?;
         if next_version <= version {
-            bail!(
-                "schema migration did not advance from version {}",
-                version
-            );
+            bail!("schema migration did not advance from version {}", version);
         }
         version = next_version;
     }
@@ -456,6 +525,23 @@ mod tests {
     }
 
     #[test]
+    fn round_trips_accessibility_preferences() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let store = Store::open(directory.path())?;
+        let expected = AccessibilityPreferences {
+            larger_text: true,
+            reduced_motion: true,
+        };
+
+        assert_eq!(
+            store.save_accessibility_preferences(expected)?,
+            expected
+        );
+        assert_eq!(store.load_accessibility_preferences()?, expected);
+        Ok(())
+    }
+
+    #[test]
     fn rejects_unknown_active_item_without_mutating_state() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let store = Store::open(directory.path())?;
@@ -468,7 +554,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_v1_state_to_v2_without_losing_work() -> Result<()> {
+    fn migrates_v1_state_to_v3_without_losing_work() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let db_path = directory.path().join(DATABASE_NAME);
         let legacy = Connection::open(&db_path)?;
@@ -502,6 +588,10 @@ mod tests {
         assert_eq!(migrated.items.len(), 1);
         assert_eq!(migrated.items[0].title, "Preserve me");
         assert_eq!(migrated.handoff, None);
+        assert_eq!(
+            store.load_accessibility_preferences()?,
+            AccessibilityPreferences::default()
+        );
         Ok(())
     }
 
