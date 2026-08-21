@@ -198,20 +198,32 @@ impl Store {
             .lock()
             .map_err(|_| anyhow!("canonical state lock is poisoned"))?;
 
-        if recovery_snapshot.exists() {
-            fs::remove_file(recovery_snapshot).with_context(|| {
+        let recovery_pending = recovery_snapshot.with_file_name(".bob-pre-restore-pending.sqlite3");
+        if recovery_pending.exists() {
+            fs::remove_file(&recovery_pending).with_context(|| {
                 format!(
-                    "remove stale pre-restore recovery snapshot at {}",
-                    recovery_snapshot.display()
+                    "remove stale pending pre-restore recovery snapshot at {}",
+                    recovery_pending.display()
                 )
             })?;
         }
 
         connection
-            .backup(MAIN_DB, recovery_snapshot, None)
-            .context("create SQLite-consistent pre-restore recovery snapshot")?;
-        quick_check_path(recovery_snapshot)
-            .context("verify pre-restore recovery snapshot before canonical mutation")?;
+            .backup(MAIN_DB, &recovery_pending, None)
+            .context("create SQLite-consistent pending pre-restore recovery snapshot")?;
+        quick_check_path(&recovery_pending)
+            .context("verify pending pre-restore recovery snapshot before promotion")?;
+
+        if recovery_snapshot.exists() {
+            fs::remove_file(recovery_snapshot).with_context(|| {
+                format!(
+                    "remove superseded pre-restore recovery snapshot at {}",
+                    recovery_snapshot.display()
+                )
+            })?;
+        }
+        fs::rename(&recovery_pending, recovery_snapshot)
+            .context("promote verified pre-restore recovery snapshot")?;
 
         let restore_result = restore_connection_from_snapshot(&mut connection, prepared_snapshot)
             .and_then(|_| load_work_state_from_connection(&connection).map(|_| ()))
