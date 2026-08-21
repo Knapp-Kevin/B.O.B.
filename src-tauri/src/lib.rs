@@ -1,4 +1,5 @@
 mod agent;
+mod export;
 mod gemini;
 mod planner;
 mod proposals;
@@ -27,6 +28,7 @@ pub fn run() {
             planner::replan_remaining_work,
             proposals::apply_next_action_proposal,
             agent::bob_assist,
+            export::export_portable_state,
             gemini::gemini_credential_status,
             gemini::configure_gemini_credential,
             gemini::remove_gemini_credential
