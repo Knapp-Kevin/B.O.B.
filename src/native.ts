@@ -24,6 +24,11 @@ export async function replanRemainingWork(): Promise<ReplanResult | null> {
   return invoke<ReplanResult>("replan_remaining_work");
 }
 
+export async function applyNextActionProposal(targetId: string): Promise<ReplanResult | null> {
+  if (!isTauriRuntime()) return null;
+  return invoke<ReplanResult>("apply_next_action_proposal", { targetId });
+}
+
 export async function loadGeminiCredentialStatus(): Promise<GeminiCredentialStatus> {
   if (!isTauriRuntime()) return browserGeminiStatus;
   return invoke<GeminiCredentialStatus>("gemini_credential_status");
