@@ -375,6 +375,27 @@ pub async fn generate_gemini_context(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[derive(Default)]
+    struct CountingSecretStore {
+        reads: AtomicUsize,
+    }
+
+    impl SecretStore for CountingSecretStore {
+        fn read(&self, _name: SecretName) -> Result<Option<Zeroizing<String>>> {
+            self.reads.fetch_add(1, Ordering::SeqCst);
+            Ok(Some(Zeroizing::new("test-secret-that-must-not-be-read".to_owned())))
+        }
+
+        fn write(&self, _name: SecretName, _value: &str) -> Result<()> {
+            Ok(())
+        }
+
+        fn delete(&self, _name: SecretName) -> Result<()> {
+            Ok(())
+        }
+    }
 
     fn allowed_policy() -> GeminiContextPolicy {
         GeminiContextPolicy {
@@ -402,6 +423,29 @@ mod tests {
             ..allowed_policy()
         }
         .allows_context());
+    }
+
+    #[test]
+    fn blocked_policy_does_not_read_the_secret_store() {
+        tauri::async_runtime::block_on(async {
+            let secrets = Arc::new(CountingSecretStore::default());
+            let credentials = GeminiCredentials::with_secret_store(secrets.clone())
+                .expect("build Gemini credentials for test");
+            let result = credentials
+                .generate_text(
+                    "context that must remain local",
+                    GeminiContextPolicy {
+                        professional_business_use_acknowledged: false,
+                        ..allowed_policy()
+                    },
+                )
+                .await
+                .expect("policy-blocked generation should return a typed result");
+
+            assert_eq!(result.state, GeminiInferenceState::PolicyBlocked);
+            assert!(result.text.is_none());
+            assert_eq!(secrets.reads.load(Ordering::SeqCst), 0);
+        });
     }
 
     #[test]
