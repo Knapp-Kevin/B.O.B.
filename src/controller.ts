@@ -1,5 +1,5 @@
 import { activeItem, applyPlanProjection, escapeHtml, focusItems, hydratePersistentWorkState, persistentWorkState, showToast, state, type ItemKind, type Route, type SetupStep } from "./model";
-import { applyNextActionProposal, configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
+import { applyNextActionProposal, assistWithBob, configureGeminiCredential, loadPersistentWorkState, planRemainingWork, removeGeminiCredential, replanRemainingWork, savePersistentWorkState } from "./native";
 import { renderShell } from "./views";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
@@ -63,7 +63,18 @@ async function commitWorkState(successMessage?: string) {
 }
 
 function pushConversation(text: string) {
-  state.chat.push({ author: "user", text }, { author: "bob", text: replyFor(text) });
+  state.chat.push({ author: "user", text });
+  render();
+
+  void assistWithBob(text)
+    .then((response) => {
+      state.chat.push({ author: "bob", text: response ?? replyFor(text) });
+    })
+    .catch((error) => {
+      console.error("Native B.O.B. assist failed; using deterministic browser fallback", error);
+      state.chat.push({ author: "bob", text: replyFor(text) });
+    })
+    .finally(render);
 }
 
 function openSetup(step: SetupStep = state.geminiStaged ? 3 : 1) {
@@ -159,9 +170,7 @@ function bindEvents() {
   });
 
   document.querySelectorAll<HTMLElement>("[data-prompt]").forEach((element) => element.addEventListener("click", () => {
-    const text = element.dataset.prompt!;
-    pushConversation(text);
-    render();
+    pushConversation(element.dataset.prompt!);
   }));
   document.querySelector("#chat-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -169,7 +178,6 @@ function bindEvents() {
     const text = input?.value.trim();
     if (!text) return;
     pushConversation(text);
-    render();
   });
 
   document.querySelector("#create-handoff")?.addEventListener("click", () => {
