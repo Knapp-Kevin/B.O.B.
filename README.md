@@ -4,329 +4,233 @@
 
 ### Better Organized Brain
 
-**One agent. Multiple models and runtimes. One place for the work that matters.**
+**One agent. Less friction. The right intelligence when it matters.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Status: Pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)
 ![Agent: B.O.B.](https://img.shields.io/badge/agent-single--agent-blue)
-![Inference: Multi-LLM](https://img.shields.io/badge/inference-multi--LLM-6f42c1)
 ![Design: ADHD-friendly](https://img.shields.io/badge/design-ADHD--friendly-8a4fff)
 ![Data: Local-first](https://img.shields.io/badge/data-local--first-success)
+![Desktop: Tauri + Rust](https://img.shields.io/badge/desktop-Tauri%202%20%2B%20Rust-24C8DB)
 
-A local-first, ADHD-friendly personal AI workbench that keeps tasks, plans, context, and continuity in one deliberately simple surface while B.O.B. can use different LLMs, inference runtimes, and tools behind the scenes.
+A local-first, ADHD-friendly personal AI workbench that keeps tasks, plans, context, preferences, and continuity under one B.O.B.-owned surface while inference runtimes remain replaceable capabilities behind the scenes.
 
-**B.O.B. is the agent. Models, runtimes, and tools are capabilities.**
+> **B.O.B. is the agent. Models, runtimes, provider APIs, and tools are capabilities.**
 
 </div>
 
 ![B.O.B. - Better Organized Brain](docs/assets/bob-readme-hero.png?raw=1&v=444fbf0)
 
 > [!IMPORTANT]
-> **Current status:** B.O.B. is in pre-alpha revival. The product and architecture baseline is established, but the revived application is not yet runnable from `master`. The retired Electron/Ollama prototype is not part of the active implementation.
+> **Current status:** B.O.B. is in active pre-alpha development on a Tauri 2 + Rust desktop foundation. The revived implementation is now present on `master`, including Rust-owned local state, Today/Inbox workflows, deterministic planning, B.O.B. Assist/proposal boundaries, recovery/export work, accessibility preferences, and a gated Gemini API capability. Release-readiness and rendered/native validation are still in progress. The retired Electron/Ollama prototype is historical only.
 
 ## Why B.O.B. exists
 
-Claude, ChatGPT, Codex, local models, and other AI systems are already capable products. B.O.B. is not trying to build weaker copies of them.
+AI products are capable, but they are fragmented. Different providers bring different models, sessions, billing systems, permissions, and interfaces. Ordinary productivity tools preserve tasks but usually lack a coherent reasoning layer. Generic AI chat can reason well but does not own durable personal planning and executive-function structure.
 
-The problem is fragmentation. Different tools have different models, sessions, billing systems, permissions, and interfaces. That leaves the user carrying the complexity: deciding what to open, where work lives, what context must be repeated, and which system is supposed to remember what.
+B.O.B. sits between those worlds.
 
-B.O.B. deliberately reverses that relationship.
-
-The user talks to **B.O.B.** B.O.B. owns the work and presents one consistent identity. Underneath that single surface, B.O.B. may use Claude, Codex, local inference, or future supported runtimes and tools when they are useful.
+The user talks to **B.O.B.** B.O.B. owns the work, continuity, deterministic services, and policy. Supported inference runtimes can change over time without turning the application into a roster of competing agents or moving canonical state into a provider session.
 
 The user should not need an architecture diagram in their head to get through Tuesday.
 
-## Product principle
+## Product principles
 
 > **Only the things that matter should compete for attention.**
 
-B.O.B. is designed around one point of contact and one durable personal workspace:
+B.O.B. is designed around a few durable rules:
 
-- one conversational identity;
-- one task and planning system;
-- one continuity layer;
-- one place to capture what is in your head;
-- multiple LLMs and inference runtimes behind the scenes;
-- tools and bounded execution when the user intentionally needs them;
-- explicit cost and privacy controls;
-- useful deterministic planning even when AI is unavailable.
+- **One user-facing agent.** B.O.B. remains the identity regardless of which inference capability is used.
+- **Local-first canonical state.** Tasks, plans, preferences, continuity, and policy remain B.O.B.-owned.
+- **Useful without inference.** Capture, task lifecycle, planning, persistence, and recovery remain available when no model is allowed or available.
+- **Preview before important changes.** Model output is untrusted until B.O.B. validates proposed application actions.
+- **Provider independence.** No provider is allowed to become B.O.B.'s architectural landlord.
+- **No surprise billing.** Authentication does not imply billing class, unknown cost fails closed, and materially different providers or paid paths are never selected silently.
+- **Low cognitive load.** The product should make the next useful move obvious rather than exposing every capability at once.
 
-## Architecture in one picture
-
-```mermaid
-flowchart LR
-    U[User] <--> B[B.O.B.\nSingle agent]
-
-    B --> W[(Tasks · Plans · Inbox · Continuity · Preferences)]
-    B --> P[Policy + Context + Routing]
-
-    P --> C[Claude-backed inference]
-    P --> X[Codex-backed inference]
-    P --> L[Local inference / GG-CORE]
-    P --> F[Future LLM/runtime]
-    P --> T[Tools / bounded execution]
-
-    C --> B
-    X --> B
-    L --> B
-    F --> B
-    T --> B
-```
-
-The models are not peer agents in the product. They are inference and execution capabilities available to **one agent: B.O.B.**
-
-## What using B.O.B. should feel like
-
-B.O.B. starts from the user's day, not from an empty prompt box.
-
-```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ B.O.B.                                                     Wednesday │
-├──────────────────────────────────────────────────────────────────────┤
-│ TODAY                                                                │
-│                                                                      │
-│ What matters                                                        │
-│   1. Finish release notes                         45 min             │
-│   2. Review pull request                          30 min             │
-│   3. Call dentist                                 10 min             │
-│                                                                      │
-│ NEXT                                                                 │
-│   Finish release notes                                              │
-│   You have 52 minutes before the next fixed commitment.             │
-│                                                                      │
-│   [ Start ]   [ Break it down ]   [ Not now ]                       │
-│                                                                      │
-│ Quick capture: What's in your head? _____________________________    │
-│                                                                      │
-│ [ Plan my day ] [ Replan ] [ I'm overwhelmed ] [ Ask B.O.B. ]      │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-The goal is not to expose everything B.O.B. can do. The goal is to make the **next useful action obvious** while keeping everything else recoverable.
+See [`docs/PRODUCT.md`](docs/PRODUCT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Four primary surfaces
 
 | Surface | Job | Deliberate constraint |
 | --- | --- | --- |
-| **Today** | Focus, schedule, next action, quick capture, replanning | Does not become a giant backlog dashboard |
-| **Inbox** | Hold unprocessed tasks, ideas, notes, reminders, and brain dumps | Capture first, categorize later |
-| **B.O.B. Chat** | Talk to B.O.B., organize work, plan, break down tasks, and request bounded execution | Provider/runtime complexity stays secondary |
-| **Settings** | Configure inference, cost policy, accessibility, privacy, and local data behavior | Advanced configuration stays out of the daily workflow |
+| **Today** | Focus, next action, daily planning, quick capture, replanning | Does not become a giant backlog dashboard |
+| **Inbox** | Hold unprocessed tasks, ideas, notes, reminders, and brain dumps | Capture first, classify later |
+| **B.O.B. Chat** | Explain, organize, break down, reorient, and propose | Provider/runtime complexity stays secondary |
+| **Settings** | Accessibility, data/continuity, truthful connected-intelligence configuration, privacy/cost controls | Internal governance and fake future-provider controls stay out |
 
-## ADHD-friendly by interaction design
+The current rendered-product Wayfinder direction is intentionally calm: one dominant purpose per screen, progressive disclosure for secondary detail, conditional space for empty content, and coherent normal-mode density without relying on reduced-information mode as a rescue hatch.
 
-B.O.B. does not diagnose ADHD, infer cognitive traits, score neurodivergence, or attempt to model the user's brain.
-
-Instead, it uses practical interaction constraints:
-
-- **Capture before organization.** Getting something out of working memory should be cheap.
-- **One obvious next action.** Answer “what should I do now?” before exposing secondary choices.
-- **Small daily focus.** A few meaningful priorities beat an emergency-shaped backlog.
-- **Cheap replanning.** A disrupted day is normal. Replanning is not failure.
-- **Progressive disclosure.** Detail appears when it is useful.
-- **Interruption recovery.** Preserve context and make resumption obvious.
-- **Overwhelm reduction.** Hide nonessential choices and surface one manageable action when needed.
-- **Accessible presentation.** Typography, contrast, motion, density, keyboard use, and hierarchy are product requirements.
-- **No guilt mechanics.** Productivity data must not become a behavioral scorecard disguised as encouragement.
-
-See [`docs/DESIGN.md`](docs/DESIGN.md) and [`docs/prd/PRD-0002-adhd-friendly-daily-planning.md`](docs/prd/PRD-0002-adhd-friendly-daily-planning.md).
-
-## One agent, multiple inference paths
-
-B.O.B. uses a small internal inference boundary so the product can change models and runtimes without changing the user's agent identity or canonical work state.
+## Architecture in one picture
 
 ```mermaid
 flowchart TB
-    B[B.O.B.] --> R[Inference Router]
+    USER[User] <--> BOB[B.O.B.\nSingle user-facing agent]
 
-    R --> CLAUDE[Claude Adapter]
-    R --> CODEX[Codex Adapter]
-    R --> LOCAL[GG-CORE / Local Adapter]
-    R --> FUTURE[Future Adapter]
+    BOB <--> STATE[(SQLite canonical state)]
+    BOB --> POLICY[Context · Cost · Privacy · Authority · Routing]
 
-    CLAUDE --> C[Claude-supported runtime]
-    CODEX --> X[Codex-supported runtime]
-    LOCAL --> G[Local model runtime]
-    FUTURE --> M[Other supported model/runtime]
+    POLICY --> CURRENT[Supported inference adapter]
+    POLICY --> FUTURE[Future account-backed / local adapters]
+    POLICY -. later .-> TOOLS[Bounded tools / execution]
 
-    C --> CLAUDE
-    X --> CODEX
-    G --> LOCAL
-    M --> FUTURE
-
-    CLAUDE --> B
-    CODEX --> B
-    LOCAL --> B
-    FUTURE --> B
+    CURRENT --> BOB
+    FUTURE --> BOB
+    TOOLS --> BOB
 ```
 
-An adapter reports what its backend can actually do. B.O.B. remains the user-facing agent regardless of which backend handled a request.
+The implementation uses a Tauri 2 desktop shell, a Rust privileged core, and a lightweight TypeScript/Vite frontend. The frontend does not receive unrestricted database, filesystem, shell, process, or credential access.
 
-Initial inference priorities are:
+### Core architecture commitments
 
-| Priority | Backend | Primary value | Cost class |
-| --- | --- | --- | --- |
-| 1 | **Claude subscription path** | General reasoning, writing, planning, coding, tool-capable work | Subscription-backed |
-| 2 | **Codex subscription path** | Coding, repository work, shell-oriented execution | Subscription-backed |
-| 3 | **GG-CORE / local** | Private or offline inference | Local compute |
-| Later | Other supported models/runtimes | Capability-specific value | Must declare cost class |
+| Concern | Current authority |
+| --- | --- |
+| User-facing identity | **B.O.B. only** |
+| Desktop shell | Tauri 2 |
+| Privileged application core | Rust |
+| Frontend | Framework-free TypeScript + Vite unless later justified |
+| Canonical ordinary state | Rust-owned SQLite |
+| Secret storage | OS-backed secret store; Windows Credential Manager on the Windows-first path |
+| Default authority | Assist: reason, organize, and propose |
+| Important state changes | Validate + preview before apply |
+| Inference availability | Optional for deterministic task/planning behavior |
+| Billing behavior | Known cost class required; no silent paid/different fallback |
+| Provider architecture | Replaceable adapters behind B.O.B.-owned routing/policy |
+| Richer governed memory | Future explicit integration boundary; prefer reuse of `MythologIQ-Labs-LLC/agent-memory` semantics |
 
-Direct metered APIs are not the default inference path.
+The detailed trust boundaries and component responsibilities live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Cost is an architectural boundary
+## Provider-independent inference
 
-```mermaid
-flowchart TD
-    Q[B.O.B. needs inference] --> S{Subscription-backed runtime available?}
-    S -->|Yes| SUB[Use allowed subscription runtime]
-    S -->|No| L{Approved local runtime available?}
-    L -->|Yes| LOCAL[Use local inference]
-    L -->|No| M{Metered inference explicitly enabled?}
-    M -->|Yes| API[Use visible metered provider]
-    M -->|No| STOP[Continue without paid inference]
-```
+The first runnable alpha used **Gemini Developer API Free** to prove the inference, policy, credential, privacy, and fail-closed seams. That was a waypoint, not B.O.B.'s permanent provider identity.
 
-> **Subscription first. Local second. Metered only by explicit consent.**
+Current product direction is provider-independent:
 
-B.O.B. must never silently turn an included subscription workflow into separately billed token usage. Unknown billing behavior fails closed.
+1. prefer simple account-backed, already-included, zero-cost, or intentionally local paths when an official third-party-compatible route exists;
+2. keep API-key integrations such as the existing Gemini capability available as advanced optional adapters when their terms and billing class fit the requested use;
+3. classify billing independently from authentication;
+4. never silently switch to a paid or materially different provider/runtime;
+5. keep deterministic B.O.B. useful when no allowed inference path is available.
+
+Google account-backed inference, additional Claude/Codex account-backed paths, and local-runtime architecture are governed by the active provider-independence Wayfinder work. This README intentionally does not promise unresolved routes before their supported contracts are established.
+
+### Current Gemini API boundary
+
+The existing Gemini API capability is an advanced optional adapter, not B.O.B.'s universal onboarding identity. Context-bearing use follows the accepted provider-use/privacy boundary and fails closed unless the required professional/business-use, data-use, sensitive-data, and billing-class conditions are satisfied. Declining that boundary leaves deterministic B.O.B. usable.
 
 See [`docs/governance/AI_COST_AND_PROVIDER_POLICY.md`](docs/governance/AI_COST_AND_PROVIDER_POLICY.md).
 
-## Assist and Delegate are B.O.B. authority levels
+## ADHD-friendly by interaction design
 
-The user always delegates to B.O.B. The distinction is about how much authority B.O.B. is allowed to exercise through its selected runtime and tools.
+B.O.B. does not diagnose ADHD, infer neurological traits, or score neurodivergence. It reduces executive-function friction through interaction design:
 
-```mermaid
-flowchart LR
-    U[User request] --> B[B.O.B.]
-    B --> MODE{Authority mode}
+- capture before categorization;
+- one obvious next action;
+- small realistic daily focus;
+- cheap replanning after disruption;
+- progressive disclosure;
+- interruption recovery and durable handoff;
+- easy deferral without losing work;
+- direct language and short decision sets;
+- accessible typography, contrast, motion, density, keyboard use, and focus states;
+- no guilt mechanics or disguised productivity scoring.
 
-    MODE -->|Assist| A[Reason · organize · propose]
-    A --> V[Validate proposed B.O.B. actions]
-    V --> STATE[(Canonical state)]
+See [`docs/prd/PRD-0002-adhd-friendly-daily-planning.md`](docs/prd/PRD-0002-adhd-friendly-daily-planning.md).
 
-    MODE -->|Delegate| G[Explicit bounded grant]
-    G --> E[Selected runtime + approved tools]
-    E --> RESULT[Result + evidence]
-    RESULT --> B
-```
+## What is implemented on `master`
 
-**Assist** is the default. B.O.B. can think, organize, transform, and propose without implicit shell, filesystem, repository, or external-workspace authority.
+The active tree now contains substantially more than the original revival planning baseline. Landed implementation includes:
 
-**Delegate** is explicit. The user gives B.O.B. a bounded task, workspace, capability set, and known cost class. B.O.B. may then use an execution-capable runtime or tool within that boundary.
+- Tauri 2 + Rust desktop application foundation;
+- Rust-owned SQLite canonical work state and migrations;
+- pre-migration recovery handling plus managed backup/restore work;
+- versioned non-secret portable export;
+- Today and Inbox work surfaces;
+- deterministic planner and task lifecycle authority;
+- B.O.B. Assist core and typed proposal validation;
+- preview-before-apply enforcement for important state changes;
+- durable restart handoff/continuity behavior;
+- accessibility preferences persisted through the Rust-owned state boundary;
+- secure Gemini credential handling behind an OS-backed secret-store abstraction;
+- a fail-closed context-bearing Gemini API capability under the accepted privacy/cost boundary;
+- Windows-first validation and NSIS packaging authority.
 
-## Target architecture
+That does **not** mean every release-readiness obligation is complete. Current work still includes rendered UX convergence, exact-head build/test evidence where required, native Windows recovery/credential/package exercises, provider-independent runtime research, and further product hardening.
 
-The revival targets a small desktop application with a strong native boundary and a web-quality interface.
+For live implementation state, use current issues/PRs and the active Wayfinder maps rather than assuming this section is an exhaustive changelog.
 
-```mermaid
-flowchart TB
-    subgraph UI[Tauri desktop UI]
-        TODAY[Today]
-        INBOX[Inbox]
-        CHAT[B.O.B. Chat]
-        SETTINGS[Settings]
-    end
+## Active development direction
 
-    UI -->|typed commands| CORE
-
-    subgraph CORE[Rust application core]
-        TASKS[Task service]
-        PLANNER[Planner]
-        CONTEXT[Context broker]
-        ROUTER[Inference router]
-        POLICY[Authority + cost policy]
-        BOB[B.O.B. agent orchestration]
-    end
-
-    CORE --> STORE[(Canonical local state)]
-    CORE --> CREDS[Protected credentials / auth references]
-
-    BOB --> CONTEXT
-    BOB --> ROUTER
-    BOB --> POLICY
-    ROUTER --> C[Claude adapter]
-    ROUTER --> X[Codex adapter]
-    ROUTER --> G[GG-CORE adapter]
-    POLICY --> TOOLS[Bounded tools / execution]
-```
-
-### Architectural commitments
-
-| Concern | Decision |
-| --- | --- |
-| User-facing agent | **B.O.B. only** |
-| Inference | Multiple LLMs/runtimes behind internal adapters |
-| Desktop shell | Tauri 2 target |
-| Native application boundary | Rust |
-| Frontend | Lightweight TypeScript web UI; framework only if justified |
-| Canonical state | Local-first and B.O.B.-owned |
-| Normal authority | Assist: reason and propose |
-| Delegated authority | Explicit, bounded, inspectable |
-| AI availability | Optional for core task/planning behavior |
-| Inference cost | Subscription-first; metered opt-in only |
-| Local inference | Optional GG-CORE path, not an app prerequisite |
-| Local HTTP AI server | Not part of the target architecture |
-| Vector database / RAG | Not part of initial revival scope |
-
-The detailed trust boundaries, data flows, and component responsibilities live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-
-## Current state
-
-**Established:**
-
-- product definition and scope;
-- single-agent, multi-LLM architectural model;
-- target trust boundaries;
-- daily-planning and ADHD-friendly interaction model;
-- subscription-first cost policy;
-- Assist versus Delegate authority model;
-- PRDs, RFCs, ADRs, governance, security, and implementation sequencing.
-
-**Not yet implemented:**
-
-- Tauri application shell;
-- canonical local persistence;
-- Today and Inbox production surfaces;
-- deterministic planner;
-- B.O.B. inference router;
-- Claude adapter;
-- Codex adapter;
-- GG-CORE adapter;
-- packaging and release automation.
-
-This README will not claim those capabilities until they exist and are verified.
-
-## Implementation sequence
+B.O.B. is moving along multiple bounded, non-conflicting frontiers:
 
 ```mermaid
 flowchart LR
-    P0[0. Repository baseline] --> P1[1. Tauri + Rust foundation]
-    P1 --> P2[2. Local state + task model]
-    P2 --> P3[3. Today + Inbox + planner]
-    P3 --> P4[4. B.O.B. agent core + Claude inference]
-    P4 --> P5[5. Codex inference]
-    P5 --> P6[6. Bounded delegation + tools]
-    P6 --> P7[7. Optional GG-CORE inference]
+    BASE[Runnable local-first workbench] --> UX[Calm primary workflow]
+    BASE --> READY[Native validation + recovery + packaging]
+    BASE --> INF[Provider-independent inference]
+    INF --> ACCOUNT[Supported account-backed paths]
+    INF --> LOCAL[Supported local paths]
+    UX --> VIABLE[Coherent viable desktop product]
+    READY --> VIABLE
+    ACCOUNT --> VIABLE
+    LOCAL --> VIABLE
 ```
 
-B.O.B. should become a competent task and daily-planning application before inference makes it clever.
+Current development intentionally avoids one giant provider framework or broad redesign. Each slice should be independently reviewable, preserve authority/security boundaries, and leave truthful validation evidence.
 
-See [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) and [`docs/ROADMAP.md`](docs/ROADMAP.md).
+See [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the current `wayfinder:map` issues.
+
+## State, recovery, and privacy
+
+B.O.B. is local-first, not local-only.
+
+Canonical ordinary state remains in a Rust-owned local SQLite database. Logical changes are transactional; schema migrations are monotonic and fail closed; backups/restores use SQLite-consistent snapshots; portable export excludes secrets; credentials remain outside SQLite in the OS secret store.
+
+Remote inference receives only bounded context intentionally. Credentials must not appear in frontend state, logs, prompts, screenshots, fixtures, or ordinary application data. Model/runtime output is untrusted until validated.
+
+Cloud sync, generalized RAG, ambient autonomous execution, and broad plugin infrastructure are not part of the accepted current product boundary.
+
+See [`.github/SECURITY.md`](.github/SECURITY.md) and [`docs/VALIDATION.md`](docs/VALIDATION.md).
+
+## Assist and future Delegate authority
+
+**Assist** is the current normal authority mode. B.O.B. may reason, organize, transform, and propose using an allowed inference capability, but ordinary chat does not inherit shell, filesystem, repository, credential, or broad external-workspace authority.
+
+**Delegate** is a later bounded execution capability. When implemented under accepted authority, the user will delegate a defined task/capability scope to **B.O.B.**, which may use an approved runtime or tool inside that grant. Delegate is not a peer-agent model.
+
+## Validation philosophy
+
+GitHub Actions are deliberately small. Verification is not.
+
+A material implementation change should run the strongest relevant checks available for its exact head, such as:
+
+- frontend production build/type validation;
+- Rust format, clippy, and tests;
+- Tauri/native build;
+- SQLite migration/restart/backup/restore exercises;
+- Windows Credential Manager behavior;
+- rendered desktop/accessibility checks at normal and minimum supported sizes;
+- reduced-information, larger-text, keyboard-focus, and reduced-motion checks where UI changes are material;
+- NSIS packaging/install smoke;
+- provider-boundary validation where inference behavior changes.
+
+Do not treat source review or a stale green check from another head as equivalent evidence.
 
 ## Repository layout
 
 ```text
-B.O.B./
-├── .github/        GitHub templates, contribution, conduct, support, and security policy
-├── docs/           Product, architecture, design, governance, decision records, and assets
-├── .gitignore      Repository ignore rules
-├── AGENTS.md       Binding instructions for coding agents
-├── LICENSE         MIT license
-└── README.md       Product and repository front door
+BOB/
+├── .github/          contribution, support, security, and repository templates
+├── docs/             product, architecture, design, governance, ADR/RFC/PRD, validation, and assets
+├── src/              TypeScript/Vite presentation layer
+├── src-tauri/        Rust/Tauri application core
+├── package.json      frontend/build scripts
+├── AGENTS.md         binding coding-agent instructions
+├── LICENSE           MIT license
+└── README.md         product and repository front door
 ```
 
-Historical implementation code is not kept in the active tree merely because it once existed. Git already has a memory. It does not need every abandoned experiment sitting in the foyer.
+Historical implementation is preserved in Git history and `archive/pre-revival-cleanup-2026-08-19`. The active tree is the active product, not a museum.
 
 ## Documentation map
 
@@ -335,65 +239,45 @@ Historical implementation code is not kept in the active tree merely because it 
 | Understand the product | [`docs/PRODUCT.md`](docs/PRODUCT.md) |
 | Understand the system | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Understand the user experience | [`docs/DESIGN.md`](docs/DESIGN.md) |
-| See implementation order | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) |
-| See release direction | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| Understand validation/release evidence | [`docs/VALIDATION.md`](docs/VALIDATION.md) |
+| See implementation direction | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) |
+| See roadmap | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
 | Review product requirements | [`docs/prd/`](docs/prd/) |
 | Review implementation proposals | [`docs/rfc/`](docs/rfc/) |
 | Review durable decisions | [`docs/adr/`](docs/adr/) |
 | Review governance | [`docs/governance/`](docs/governance/) |
+| Review security | [`.github/SECURITY.md`](.github/SECURITY.md) |
 | Understand legacy history | [`docs/legacy/`](docs/legacy/) |
-| See documentation traceability | [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) |
 | Contribute | [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) |
-| Review security model | [`.github/SECURITY.md`](.github/SECURITY.md) |
 
 The full documentation index is [`docs/README.md`](docs/README.md).
 
 ## Deliberate non-goals
 
-The initial revival does **not** include:
+Current accepted scope does not include:
 
-- a visible multi-agent swarm or agent roster;
-- cognitive profiling or inferred neurodivergence scoring;
-- medical or diagnostic guidance;
-- a proprietary foundation model;
-- an Ollama dependency;
-- a bundled vector database or general-purpose RAG knowledge center;
-- ambient autonomous execution authority;
-- silent metered API fallback;
+- visible peer-agent or swarm UX;
+- cognitive profiling or diagnostic behavior;
 - cloud sync or multi-user collaboration;
-- a plugin marketplace;
-- generalized project-management software;
-- rebuilding vendor-specific AI applications feature for feature.
+- generalized RAG/knowledge-center infrastructure;
+- ambient open-ended execution authority;
+- silent metered API fallback;
+- a broad plugin marketplace;
+- mandatory local inference;
+- a single mandatory provider architecture;
+- rebuilding vendor-specific AI clients feature-for-feature.
 
-New scope must justify why B.O.B. should own it instead of letting an existing runtime or tool provide the capability behind B.O.B.'s unified surface.
+New scope must justify why B.O.B. should own it rather than letting an existing runtime or tool provide the capability behind B.O.B.'s unified surface.
 
-## Legacy preservation
+## Governance
 
-The original Electron/Ollama-era implementation and related experiments are preserved in Git history and on `archive/pre-revival-cleanup-2026-08-19`. That material is historical evidence, not a supported release line or architectural authority.
+Material changes are governed through current product/architecture authority, Wayfinder decisions, PRDs, RFCs, ADRs, and normal pull-request review. Unresolved consequential decisions block only work that depends on them; safe disjoint implementation and validation should continue.
 
-See [`docs/legacy/README.md`](docs/legacy/README.md).
-
-## Governance, contribution, and validation
-
-B.O.B. is intentionally small, but small does not mean undocumented.
-
-Material changes are traceable through PRDs, RFCs, and ADRs. Implementation must agree with accepted records. If a decision changes, supersede the record rather than quietly rewriting history.
-
-GitHub Actions and required CI gates are intentionally minimal. The implementing developer or coding agent is responsible for relevant builds, tests, linting, type checks, targeted integration checks, and manual validation before requesting review, then recording that evidence in the pull request.
-
-Project governance is documented in [`docs/governance/GOVERNANCE.md`](docs/governance/GOVERNANCE.md). Coding-agent requirements are binding in [`AGENTS.md`](AGENTS.md).
-
-## Privacy and security posture
-
-B.O.B. is local-first, not local-only.
-
-Canonical personal state remains local by default. Remote inference receives bounded context intentionally. Credentials do not belong in frontend code, logs, prompts, or ordinary local state. Model output is untrusted until validated. Filesystem and shell authority require an explicit delegated boundary.
-
-Security reporting and the current security contract are documented in [`.github/SECURITY.md`](.github/SECURITY.md).
+Read [`AGENTS.md`](AGENTS.md) before making changes and [`docs/governance/GOVERNANCE.md`](docs/governance/GOVERNANCE.md) for the governing model.
 
 ## License
 
-B.O.B. is open source under the [MIT License](LICENSE). Use it, learn from it, adapt it, and build something useful.
+B.O.B. is open source under the [MIT License](LICENSE).
 
 ---
 
