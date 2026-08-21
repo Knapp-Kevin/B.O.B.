@@ -7,7 +7,8 @@ use tauri::State;
 use zeroize::{Zeroize, Zeroizing};
 
 const VALIDATION_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1";
-const GENERATE_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const GENERATE_URL: &str =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const MAX_CONTEXT_INPUT: usize = 4_000;
 const MAX_OUTPUT_TOKENS: u32 = 512;
 
@@ -385,7 +386,9 @@ mod tests {
     impl SecretStore for CountingSecretStore {
         fn read(&self, _name: SecretName) -> Result<Option<Zeroizing<String>>> {
             self.reads.fetch_add(1, Ordering::SeqCst);
-            Ok(Some(Zeroizing::new("test-secret-that-must-not-be-read".to_owned())))
+            Ok(Some(Zeroizing::new(
+                "test-secret-that-must-not-be-read".to_owned(),
+            )))
         }
 
         fn write(&self, _name: SecretName, _value: &str) -> Result<()> {
@@ -468,6 +471,82 @@ mod tests {
             assert_eq!(result.state, GeminiInferenceState::PolicyBlocked);
             assert!(result.text.is_none());
             assert_eq!(secrets.reads.load(Ordering::SeqCst), 0);
+        });
+    }
+
+    #[test]
+    fn retired_intent_flag_cannot_deserialize_into_an_allowing_policy() {
+        // The retired `freeTierIntended` field expressed intent, not billing posture.
+        // A caller replaying the old payload shape must fail closed at the IPC boundary
+        // rather than silently producing a policy that permits context-bearing inference.
+        let retired = serde_json::json!({
+            "professionalBusinessUseAcknowledged": true,
+            "contentConfirmedNonSensitive": true,
+            "freeTierIntended": true
+        });
+
+        let decoded = serde_json::from_value::<GeminiContextPolicy>(retired);
+        assert!(
+            decoded.is_err(),
+            "retired intent-only payload must not deserialize into a policy"
+        );
+    }
+
+    #[test]
+    fn every_confirmation_is_required_at_the_deserialization_boundary() {
+        // Omitting any confirmation must be a decode failure, never a silent `false`
+        // that a later refactor could turn into a permissive default.
+        for omitted in [
+            "professionalBusinessUseAcknowledged",
+            "contentConfirmedNonSensitive",
+            "freeTierProjectConfirmed",
+        ] {
+            let mut payload = serde_json::Map::new();
+            for field in [
+                "professionalBusinessUseAcknowledged",
+                "contentConfirmedNonSensitive",
+                "freeTierProjectConfirmed",
+            ] {
+                if field != omitted {
+                    payload.insert(field.to_owned(), serde_json::Value::Bool(true));
+                }
+            }
+
+            let decoded =
+                serde_json::from_value::<GeminiContextPolicy>(serde_json::Value::Object(payload));
+            assert!(
+                decoded.is_err(),
+                "policy missing `{omitted}` must not deserialize"
+            );
+        }
+
+        let complete = serde_json::json!({
+            "professionalBusinessUseAcknowledged": true,
+            "contentConfirmedNonSensitive": true,
+            "freeTierProjectConfirmed": true
+        });
+        let decoded = serde_json::from_value::<GeminiContextPolicy>(complete)
+            .expect("a complete policy payload should decode");
+        assert!(decoded.allows_context());
+    }
+
+    #[test]
+    fn oversized_context_is_rejected_before_the_secret_store_is_read() {
+        tauri::async_runtime::block_on(async {
+            let secrets = Arc::new(CountingSecretStore::default());
+            let credentials = GeminiCredentials::with_secret_store(secrets.clone())
+                .expect("build Gemini credentials for test");
+            let oversized = "x".repeat(MAX_CONTEXT_INPUT + 1);
+
+            let error = credentials
+                .generate_text(&oversized, allowed_policy())
+                .await
+                .expect_err("oversized context must be rejected");
+
+            assert_eq!(secrets.reads.load(Ordering::SeqCst), 0);
+            let message = error.to_string();
+            assert!(!message.contains(&oversized));
+            assert!(!message.contains("test-secret-that-must-not-be-read"));
         });
     }
 
