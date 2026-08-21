@@ -29,10 +29,7 @@ struct PortableExport {
     preferences: AccessibilityPreferences,
 }
 
-fn build_export(
-    state: WorkState,
-    preferences: AccessibilityPreferences,
-) -> PortableExport {
+fn build_export(state: WorkState, preferences: AccessibilityPreferences) -> PortableExport {
     PortableExport {
         schema: EXPORT_SCHEMA,
         version: EXPORT_VERSION,
@@ -47,10 +44,7 @@ fn build_export(
     }
 }
 
-pub fn export_json(
-    state: WorkState,
-    preferences: AccessibilityPreferences,
-) -> Result<String> {
+pub fn export_json(state: WorkState, preferences: AccessibilityPreferences) -> Result<String> {
     serde_json::to_string_pretty(&build_export(state, preferences))
         .context("serialize B.O.B. portable export")
 }
