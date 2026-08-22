@@ -9,7 +9,7 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "validate:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check && cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings && cargo test --manifest-path src-tauri/Cargo.toml",
     "validate": "npm run build && npm run validate:rust",
-    "package:windows": "tauri build --bundles nsis",
+    "package:windows": "cargo clean --manifest-path src-tauri/Cargo.toml -p bob && tauri build --bundles nsis",
     "tauri": "tauri"
   },
   "dependencies": {
