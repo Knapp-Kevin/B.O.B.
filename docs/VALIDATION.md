@@ -137,11 +137,14 @@ A clearly identified local/developer alpha may be built and reviewed before a pr
 
 Do not create a large hosted matrix.
 
-Once lockfiles are committed, a small pull-request safety net may run:
+Before lockfiles exist, narrowly scoped pull-request diagnostics may execute unlocked dependency resolution to expose build/type/format/lint/test defects that cannot be run in the current agent environment. Those runs are **diagnostic execution evidence only**: they do not satisfy dependency reproducibility or release acceptance, and their PR descriptions must preserve that distinction.
 
-- deterministic dependency install from lockfiles;
-- frontend build/type check;
-- Rust format, clippy, and unit/integration tests.
+The current diagnostic safety net is intentionally path-scoped:
+
+- frontend changes under `src/**` run Node 22 `npm install` followed by `npm run build`;
+- Rust changes under `src-tauri/**` run Rust 1.88 format, Clippy with warnings denied, and tests.
+
+Once lockfiles are committed, the small pull-request safety net should switch to deterministic dependency installation from those lockfiles while preserving the same focused frontend/Rust gates.
 
 Routine hosted CI does not replace Windows Credential Manager testing, restart/recovery testing, rendered UX review, installer verification, or live-provider evidence.
 
