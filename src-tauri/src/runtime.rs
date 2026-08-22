@@ -141,6 +141,9 @@ pub enum RuntimePolicyBlock {
     MeteredDisabled,
     LocalityUnknown,
     LocalityBlocked,
+    MissingModel,
+    ModelNotReady(RuntimeReadiness),
+    UnsupportedCapability(RuntimeCapability),
 }
 
 pub fn validate_runtime_for_inference(
@@ -193,6 +196,21 @@ pub fn validate_runtime_for_inference(
         | LocalityClass::LoopbackLocal
         | LocalityClass::LanRemote
         | LocalityClass::Cloud => {}
+    }
+
+    let model = status.model.as_ref().ok_or(RuntimePolicyBlock::MissingModel)?;
+
+    if model.readiness != RuntimeReadiness::Ready {
+        return Err(RuntimePolicyBlock::ModelNotReady(model.readiness));
+    }
+
+    if !model
+        .capabilities
+        .contains(&RuntimeCapability::TextGeneration)
+    {
+        return Err(RuntimePolicyBlock::UnsupportedCapability(
+            RuntimeCapability::TextGeneration,
+        ));
     }
 
     Ok(())
@@ -403,6 +421,47 @@ mod tests {
                 }
             ),
             Ok(())
+        );
+    }
+
+    #[test]
+    fn missing_selected_model_fails_closed() {
+        let mut status = local_status();
+        status.model = None;
+
+        assert_eq!(
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+            Err(RuntimePolicyBlock::MissingModel)
+        );
+    }
+
+    #[test]
+    fn non_ready_model_fails_closed() {
+        for readiness in [
+            RuntimeReadiness::Loading,
+            RuntimeReadiness::NotLoaded,
+            RuntimeReadiness::Unknown,
+        ] {
+            let mut status = local_status();
+            status.model.as_mut().expect("model").readiness = readiness;
+
+            assert_eq!(
+                validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+                Err(RuntimePolicyBlock::ModelNotReady(readiness))
+            );
+        }
+    }
+
+    #[test]
+    fn model_without_text_generation_fails_closed() {
+        let mut status = local_status();
+        status.model.as_mut().expect("model").capabilities = vec![RuntimeCapability::Streaming];
+
+        assert_eq!(
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+            Err(RuntimePolicyBlock::UnsupportedCapability(
+                RuntimeCapability::TextGeneration
+            ))
         );
     }
 }
