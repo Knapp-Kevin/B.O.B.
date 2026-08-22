@@ -43,6 +43,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             startup::startup_status,
+            startup::restart_application,
             state::load_work_state,
             state::load_accessibility_preferences,
             state::set_accessibility_preferences,
