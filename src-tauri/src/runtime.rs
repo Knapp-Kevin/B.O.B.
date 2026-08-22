@@ -115,16 +115,43 @@ pub enum RuntimeFailure {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RuntimeInvocationPolicy {
+    pub metered_enabled: bool,
+    pub cloud_allowed: bool,
+    pub lan_remote_allowed: bool,
+}
+
+impl RuntimeInvocationPolicy {
+    pub const fn local_only() -> Self {
+        Self {
+            metered_enabled: false,
+            cloud_allowed: false,
+            lan_remote_allowed: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuntimePolicyBlock {
     Unavailable,
     Unauthenticated,
+    ReportedFailure(RuntimeFailure),
     BillingClassUnknown,
+    MeteredDisabled,
     LocalityUnknown,
+    LocalityBlocked,
 }
 
-pub fn validate_runtime_for_inference(status: &RuntimeStatus) -> Result<(), RuntimePolicyBlock> {
+pub fn validate_runtime_for_inference(
+    status: &RuntimeStatus,
+    policy: RuntimeInvocationPolicy,
+) -> Result<(), RuntimePolicyBlock> {
     if status.health == RuntimeHealth::Unavailable {
         return Err(RuntimePolicyBlock::Unavailable);
+    }
+
+    if let Some(failure) = status.failure {
+        return Err(RuntimePolicyBlock::ReportedFailure(failure));
     }
 
     match status.auth_state {
@@ -134,12 +161,29 @@ pub fn validate_runtime_for_inference(status: &RuntimeStatus) -> Result<(), Runt
         }
     }
 
-    if status.billing_class == BillingClass::Unknown {
-        return Err(RuntimePolicyBlock::BillingClassUnknown);
+    match status.billing_class {
+        BillingClass::Unknown => return Err(RuntimePolicyBlock::BillingClassUnknown),
+        BillingClass::Metered if !policy.metered_enabled => {
+            return Err(RuntimePolicyBlock::MeteredDisabled)
+        }
+        BillingClass::Free
+        | BillingClass::Subscription
+        | BillingClass::Local
+        | BillingClass::Metered => {}
     }
 
-    if status.locality == LocalityClass::Unknown {
-        return Err(RuntimePolicyBlock::LocalityUnknown);
+    match status.locality {
+        LocalityClass::Unknown => return Err(RuntimePolicyBlock::LocalityUnknown),
+        LocalityClass::Cloud if !policy.cloud_allowed => {
+            return Err(RuntimePolicyBlock::LocalityBlocked)
+        }
+        LocalityClass::LanRemote if !policy.lan_remote_allowed => {
+            return Err(RuntimePolicyBlock::LocalityBlocked)
+        }
+        LocalityClass::OnDevice
+        | LocalityClass::LoopbackLocal
+        | LocalityClass::LanRemote
+        | LocalityClass::Cloud => {}
     }
 
     Ok(())
@@ -174,9 +218,23 @@ mod tests {
         }
     }
 
+    fn cloud_status() -> RuntimeStatus {
+        let mut status = local_status();
+        status.identity.runtime_id = "cloud-runtime".to_owned();
+        status.identity.runtime_kind = "api".to_owned();
+        status.auth_mechanism = AuthMechanism::ApiKey;
+        status.auth_state = AuthState::Ready;
+        status.billing_class = BillingClass::Free;
+        status.locality = LocalityClass::Cloud;
+        status
+    }
+
     #[test]
     fn healthy_local_runtime_does_not_require_credentials() {
-        assert_eq!(validate_runtime_for_inference(&local_status()), Ok(()));
+        assert_eq!(
+            validate_runtime_for_inference(&local_status(), RuntimeInvocationPolicy::local_only()),
+            Ok(())
+        );
     }
 
     #[test]
@@ -185,7 +243,7 @@ mod tests {
         status.billing_class = BillingClass::Unknown;
 
         assert_eq!(
-            validate_runtime_for_inference(&status),
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
             Err(RuntimePolicyBlock::BillingClassUnknown)
         );
     }
@@ -196,7 +254,7 @@ mod tests {
         status.locality = LocalityClass::Unknown;
 
         assert_eq!(
-            validate_runtime_for_inference(&status),
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
             Err(RuntimePolicyBlock::LocalityUnknown)
         );
     }
@@ -207,36 +265,107 @@ mod tests {
         status.health = RuntimeHealth::Unavailable;
 
         assert_eq!(
-            validate_runtime_for_inference(&status),
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
             Err(RuntimePolicyBlock::Unavailable)
         );
     }
 
     #[test]
-    fn cloud_runtime_with_missing_auth_fails_closed() {
+    fn reported_failure_fails_closed_even_when_health_is_ready() {
         let mut status = local_status();
-        status.auth_mechanism = AuthMechanism::ApiKey;
-        status.auth_state = AuthState::Missing;
-        status.billing_class = BillingClass::Free;
-        status.locality = LocalityClass::Cloud;
+        status.failure = Some(RuntimeFailure::AllowanceExhausted);
 
         assert_eq!(
-            validate_runtime_for_inference(&status),
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+            Err(RuntimePolicyBlock::ReportedFailure(
+                RuntimeFailure::AllowanceExhausted
+            ))
+        );
+    }
+
+    #[test]
+    fn cloud_runtime_with_missing_auth_fails_closed() {
+        let mut status = cloud_status();
+        status.auth_state = AuthState::Missing;
+
+        assert_eq!(
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    cloud_allowed: true,
+                    ..RuntimeInvocationPolicy::local_only()
+                }
+            ),
             Err(RuntimePolicyBlock::Unauthenticated)
         );
     }
 
     #[test]
     fn auth_state_does_not_determine_billing_class() {
-        let mut status = local_status();
+        let mut status = cloud_status();
         status.auth_mechanism = AuthMechanism::AccountSession;
         status.auth_state = AuthState::Ready;
         status.billing_class = BillingClass::Unknown;
-        status.locality = LocalityClass::Cloud;
 
         assert_eq!(
-            validate_runtime_for_inference(&status),
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    cloud_allowed: true,
+                    ..RuntimeInvocationPolicy::local_only()
+                }
+            ),
             Err(RuntimePolicyBlock::BillingClassUnknown)
+        );
+    }
+
+    #[test]
+    fn metered_runtime_requires_explicit_enablement() {
+        let mut status = cloud_status();
+        status.billing_class = BillingClass::Metered;
+
+        assert_eq!(
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    cloud_allowed: true,
+                    ..RuntimeInvocationPolicy::local_only()
+                }
+            ),
+            Err(RuntimePolicyBlock::MeteredDisabled)
+        );
+
+        assert_eq!(
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    metered_enabled: true,
+                    cloud_allowed: true,
+                    lan_remote_allowed: false,
+                }
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn remote_locality_requires_explicit_permission() {
+        let status = cloud_status();
+
+        assert_eq!(
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+            Err(RuntimePolicyBlock::LocalityBlocked)
+        );
+
+        assert_eq!(
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    cloud_allowed: true,
+                    ..RuntimeInvocationPolicy::local_only()
+                }
+            ),
+            Ok(())
         );
     }
 }
