@@ -1,160 +1,166 @@
 # RFC-0002: Runtime Adapter Protocol
 
 **Status:** Accepted  
-**Related:** PRD-0001, PRD-0003, ADR-0001, ADR-0005  
+**Related:** PRD-0001, PRD-0003, ADR-0001, ADR-0005, Wayfinder #34, #35, #79, #80, #81  
 **Historical context:** ADR-0003 was rejected after the first-alpha inference route changed.
 
 ## Proposal
 
-Create a small internal `RuntimeAdapter` contract that lets the single B.O.B. agent use different LLM/inference backends over time without changing canonical product state or user-facing identity.
+B.O.B. owns one small internal runtime contract that lets the single B.O.B. agent use different inference capabilities without changing canonical product state, user-facing identity, authority, or cost policy.
 
-Execution tools are exposed through a separate bounded tool gateway. A runtime may advertise tool-capable execution, but that capability is still subject to B.O.B.'s authority policy.
-
-## First-alpha applicability
-
-This RFC remains the accepted long-term architectural seam for multiple inference/runtime capabilities, but its original multi-adapter rollout assumptions are **not** first-alpha requirements.
-
-Resolved Wayfinder decisions for the first runnable alpha establish that:
-
-- B.O.B. has one required inference path: **Gemini Developer API Free**;
-- a second backend is deferred;
-- local inference is deferred;
-- Delegate/tool execution is deferred;
-- B.O.B. remains useful in deterministic mode when inference is unavailable;
-- no paid or different backend may be selected silently.
-
-Accordingly, the Claude, Codex, GG-CORE, multi-backend selection, Delegate, and two-adapter acceptance material below describes future expansion capability rather than implementation authority for the first alpha.
-
-The exact narrow first-alpha agent-core and Gemini adapter contract remains intentionally unresolved until the active Wayfinder decision `Wayfinder: grilling | Define B.O.B. agent core and runtime-routing contract` is accepted or amended. This RFC must not be used to answer that owner decision by implication.
+Execution tools remain behind a separate bounded tool gateway. A runtime may itself be capable of tools, shell, filesystem, MCP, or agent sessions, but those capabilities are not inherited through the inference adapter unless later authority explicitly grants them.
 
 ## Product invariant
 
 > **The adapter selects capability, not identity. The user is always interacting with B.O.B.**
 
-## Conceptual interface
+Removing any one adapter must leave B.O.B. buildable, launchable, state-safe, and usefully deterministic.
+
+## Authority and current applicability
+
+The first runnable alpha used Gemini Developer API Free to prove the inference, credential, privacy, billing, and failure-policy seams. That adapter remains an advanced optional capability, not B.O.B.'s permanent runtime identity.
+
+Wayfinder #34 is accepted. B.O.B. owns orchestration, bounded context assembly, routing/policy, response and proposal validation, deterministic-service coordination, compact continuity, and failure handling.
+
+Wayfinder #79 is the current provider-independence destination. Resolved research #80 and #81 establishes the current supported direction:
+
+- account-backed external runtimes may be added when they expose an official machine-consumable surface and truthful auth/billing state;
+- B.O.B.-native local inference should use a Rust-owned adapter seam, initially with an in-process Rust engine and GGUF as the first intentionally supported local model-package format;
+- Ollama and LM Studio may be supported as optional compatibility adapters, but localhost alone does not prove local execution, privacy class, or billing class;
+- provider/runtime-specific tools, sessions, model-management ecosystems, MCPs, and arbitrary sampling knobs do not belong in the common contract.
+
+## Normalized runtime contract
+
+Normalize only information B.O.B. needs to route safely and explain behavior truthfully.
+
+### Runtime identity and health
+
+Every adapter reports:
+
+- stable runtime ID;
+- runtime kind/version when observable;
+- availability/health;
+- normalized failure reason when unavailable.
+
+### Authentication
+
+Every adapter reports:
+
+- authentication mechanism, such as `none`, `api_key`, `account_session`, or `runtime_token`;
+- authentication state: `not_required`, `ready`, `missing`, `expired`, `invalid`, or `unknown`.
+
+Authentication mechanism does **not** imply billing class.
+
+### Billing and locality
+
+Every adapter reports one billing class:
+
+- `free`;
+- `subscription`;
+- `local`;
+- `metered`;
+- `unknown`.
+
+Every adapter also reports one locality/privacy class:
+
+- `on_device`;
+- `loopback_local`;
+- `lan_remote`;
+- `cloud`;
+- `unknown`.
+
+Unknown billing classification fails closed. A loopback endpoint does not prove `local` billing or on-device privacy. Provider/model changes that materially affect billing, privacy, or user intent never happen silently.
+
+### Model and capability state
+
+Where supported, an adapter reports:
+
+- stable model ID and user-facing display name;
+- proven capabilities required by B.O.B., such as text generation, structured output, streaming, or cancellation;
+- context limit when reliably observable;
+- load/readiness state;
+- bounded resource metadata when useful for local inference, such as approximate memory footprint or accelerator class.
+
+Do not infer capabilities from provider brand or model name when the runtime can report them directly.
+
+### Invocation lifecycle
+
+The shared lifecycle is intentionally small:
 
 ```rust
 trait RuntimeAdapter {
-    fn id(&self) -> RuntimeId;
-    fn capabilities(&self) -> RuntimeCapabilities;
-    fn billing_class(&self) -> BillingClass;
-    async fn status(&self) -> RuntimeStatus;
-    async fn execute(&self, request: InferenceRequest) -> Result<InferenceResult, RuntimeError>;
+    fn identity(&self) -> RuntimeIdentity;
+    async fn status(&self) -> Result<RuntimeStatus, RuntimeError>;
+    async fn invoke(&self, request: InferenceRequest) -> Result<InferenceResult, RuntimeError>;
     async fn cancel(&self, operation: OperationId) -> Result<(), RuntimeError>;
 }
 ```
 
-The exact Rust types may change during implementation. The semantic contract is normative for the future multi-adapter architecture. First-alpha code should implement only the subset authorized by the resolved Wayfinder route.
+Streaming may be exposed through a narrow optional capability where the adapter can support it truthfully. The exact Rust types are implementation details; the semantics above are normative.
 
-## Runtime capabilities
+## Inference request boundary
 
-Capabilities are explicit rather than inferred from vendor name. Candidate flags for future adapters include:
-
-- conversational reasoning;
-- structured output;
-- coding;
-- streaming;
-- cancellation;
-- session continuation;
-- workspace-aware execution;
-- shell/tool execution where the underlying runtime supports it and B.O.B. authority policy permits it.
-
-Unsupported capabilities fail clearly. Capability flags that have no authorized first-alpha consumer should not be implemented merely because they appear here.
-
-## InferenceRequest
-
-The long-term request shape may include:
+A request may contain only B.O.B.-owned, policy-approved inference inputs:
 
 - operation ID;
-- B.O.B. authority mode: Assist or, in a later release, Delegate;
+- current B.O.B. authority mode;
 - user instruction;
 - bounded B.O.B. context package;
-- requested structured-output schema when relevant;
-- required runtime capabilities when multiple capabilities actually exist;
-- optional bounded workspace for later Delegate mode;
+- requested structured-output schema when required;
+- required inference capabilities;
 - timeout/cancellation metadata;
 - cost-policy snapshot;
-- privacy/runtime constraints.
+- privacy/locality constraints.
 
-For the first alpha, Delegate-specific fields and generalized multi-backend capability negotiation are deferred unless a later resolved Wayfinder decision explicitly brings them back into scope.
+Ordinary Assist requests do not carry arbitrary shell commands, workspace grants, filesystem paths, provider credentials, MCP/tool definitions, or vendor-session authority.
 
-## InferenceResult
+## Inference result boundary
 
-A result includes:
+A normalized result contains:
 
 - operation ID;
-- runtime/provider ID;
-- model identity where available and useful;
-- model/runtime output;
+- runtime/provider and model identity where useful;
+- generated output;
 - structured proposed B.O.B. actions when present;
-- execution metadata safe for inspection;
+- safe execution metadata;
 - terminal status;
-- error classification when unsuccessful.
+- normalized failure classification.
 
-The result does not become a separate agent conversation. B.O.B. integrates it into B.O.B.'s own response and continuity.
+The result does not become a separate agent conversation or canonical state. B.O.B. validates it, integrates useful output into B.O.B.'s own response/continuity, and previews important proposed state changes before application.
 
 ## Proposed B.O.B. actions
 
-Model output must never be treated as executable application code. Supported proposals use an allowlisted schema, for example:
+Model output is untrusted. State-changing proposals use an allowlisted typed schema. The Rust core verifies schema, current state, business constraints, authority, and required confirmation before applying any proposal.
 
-```json
-{
-  "type": "schedule_task",
-  "taskId": "task-42",
-  "start": "2026-08-19T10:30:00-04:00"
-}
-```
+## Runtime-specific boundaries
 
-The core verifies schema, current state, scheduling constraints, authority, and required confirmation before applying a proposal.
+### Gemini Developer API
 
-## Assist versus Delegate
+The currently implemented API-key adapter remains an advanced optional path. It must preserve the accepted professional/business-use, unpaid-service data-use, Free-Tier confirmation, secret-storage, and fail-closed billing boundaries.
 
-```mermaid
-flowchart TB
-    REQ[User asks B.O.B.] --> MODE{B.O.B. authority mode}
+### Account-backed external runtimes
 
-    MODE -- Assist --> CTX[Bounded B.O.B. context]
-    CTX --> ROUTE[Inference router]
-    ROUTE --> RUNTIME[Selected runtime]
-    RUNTIME --> RESULT[Normalized inference result]
-    RESULT --> BOB[B.O.B. response + proposals]
+Claude Code, Codex, Antigravity, or another future runtime may be supported only through an official machine-consumable surface with observable enough auth, billing, failure, and cancellation behavior to satisfy this RFC.
 
-    MODE -- Delegate later --> GRANT[Explicit task + workspace + capability grant]
-    GRANT --> POLICY[Authority check]
-    POLICY --> EXEC[Runtime and/or tool gateway]
-    EXEC --> EVIDENCE[Result + evidence]
-    EVIDENCE --> BOB
-```
+B.O.B. does not reuse private credentials, scrape proprietary sessions, or make any one vendor client mandatory.
 
-Assist mode must not silently request Delegate capabilities. Delegate execution is not a first-alpha requirement.
+### B.O.B.-native local runtime
 
-## Runtime expansion paths
+The first-party local seam is a B.O.B.-owned `LocalRuntimeAdapter`. Current #81 research supports an in-process Rust implementation initially backed by `mistralrs`, with GGUF as the first intentionally supported package format.
 
-### First alpha
+The underlying engine's tool use, shell, filesystem, web search, MCP, or agent-session features remain disabled/outside the adapter. Run inference off the UI thread. Preserve a platform-neutral adapter contract so an isolated worker or different engine can replace the implementation later without changing B.O.B. product state.
 
-Gemini Developer API Free is the sole required inference path. The exact first-alpha adapter surface is owned by the active Wayfinder agent-core/runtime-routing decision, not by the older multi-adapter examples in this RFC.
+### Ollama compatibility
 
-### Claude runtime adapter
+An Ollama adapter may use the official local API for version, model inventory, running-model state, metadata, chat, streaming, and cancellation where supported.
 
-A later release may use a supported machine-consumable invocation path and vendor-owned authentication where appropriate. Restrict working directory and execution authority for ordinary Assist requests.
+Because Ollama localhost can also route to cloud models, B.O.B. must classify each selected model/runtime route explicitly. Cloud or ambiguous routes remain `unknown` until governed and therefore fail closed for no-surprise billing/locality policy.
 
-### Codex runtime adapter
+### LM Studio compatibility
 
-A later release may use a supported programmatic/CLI surface. Normalize its available capabilities while preserving B.O.B. as the user-facing identity.
+An LM Studio adapter may use its supported local/v1 or OpenAI-compatible API and its API-token auth when configured.
 
-### GG-CORE runtime adapter
-
-A later release may treat GG-CORE as a local inference capability. It provides model execution, not B.O.B. business authority or canonical state ownership.
-
-None of these later adapters is an alpha blocker.
-
-## Tool gateway
-
-Tool execution is not represented as another agent. B.O.B. may eventually invoke allowlisted tools through a separate gateway under explicit authority policy.
-
-A runtime capable of invoking tools directly must still be constrained to the permissions B.O.B. granted for the operation. Unsupported restriction capabilities must be surfaced rather than ignored.
-
-Tool/Delegate execution remains deferred for the first runnable alpha.
+B.O.B. must distinguish on-device execution from LAN/remote/cloud routes and must not inherit LM Studio MCP/tool authority through the inference adapter.
 
 ## Error model
 
@@ -162,34 +168,45 @@ Normalize at least:
 
 - unavailable;
 - unauthenticated;
-- allowance exhausted;
-- policy blocked;
+- allowance or quota exhausted;
+- billing class unknown;
+- privacy/locality policy blocked;
 - timeout;
 - cancelled;
 - invalid response;
 - unsupported capability;
 - execution failure.
 
-Do not collapse all failures into `runtime failed` when B.O.B. can provide an actionable distinction.
-
-The active Wayfinder agent-core/runtime decision owns the exact minimum error set required for the first alpha.
+Do not collapse actionable failures into a generic runtime error.
 
 ## Security requirements
 
-- sanitize logs;
-- no raw credentials in request structs that reach the UI;
-- no arbitrary shell command supplied by model output;
-- enforce bounded working directory if Delegate mode is introduced later;
-- validate structured proposals before state mutation;
-- fail closed for unknown billing class;
-- preserve B.O.B. as the only canonical conversation identity.
+- sanitize logs and returned metadata;
+- keep raw credentials inside provider/runtime-specific protected boundaries;
+- no arbitrary shell or filesystem authority through inference adapters;
+- validate structured proposals before canonical-state mutation;
+- fail closed for unknown billing or materially ambiguous locality/privacy class;
+- preserve B.O.B. as the only canonical conversation identity;
+- do not inherit external runtime tool/MCP/session authority by convenience;
+- do not silently change provider, runtime, model, billing class, or locality when that materially changes user intent, privacy, or cost.
+
+## Deliberately excluded from the common contract
+
+Do not normalize merely because providers expose it:
+
+- full model-management ecosystems;
+- provider-specific agent/session abstractions;
+- MCP servers or tool catalogs;
+- shell/filesystem/workspace authority;
+- every provider sampling parameter;
+- provider-specific billing products;
+- mobile/cloud-sync semantics;
+- peer-agent identities.
+
+Add common fields only after at least one B.O.B. product behavior actually requires them.
 
 ## Acceptance criteria
 
-### Durable multi-adapter architecture
+This RFC is satisfied when each supported adapter can report truthful identity, auth, billing, locality/privacy, capabilities, readiness, invocation/cancellation behavior, and normalized failures through the B.O.B.-owned seam without owning canonical state or user identity.
 
-When a later release actually introduces multiple backends, two materially different runtime adapters should be able to satisfy the shared interface while preserving their distinct capabilities, cost class, errors, and authorization boundaries, with the user experiencing both through the same B.O.B. identity and canonical state.
-
-### First runnable alpha
-
-This RFC does not require two adapters, subscription-backed inference, local inference, or Delegate/tool execution for alpha acceptance. First-alpha acceptance follows the resolved Wayfinder destination and the eventual accepted resolution of the active agent-core/runtime-routing ticket.
+Adding a new adapter must not require rewriting B.O.B.'s task/planning state, conversation identity, authority model, or UI around that provider. Unsupported or unknown billing/privacy/capability state must fail closed rather than silently selecting a materially different route.
