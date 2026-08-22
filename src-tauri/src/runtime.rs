@@ -198,7 +198,10 @@ pub fn validate_runtime_for_inference(
         | LocalityClass::Cloud => {}
     }
 
-    let model = status.model.as_ref().ok_or(RuntimePolicyBlock::MissingModel)?;
+    let model = status
+        .model
+        .as_ref()
+        .ok_or(RuntimePolicyBlock::MissingModel)?;
 
     if model.readiness != RuntimeReadiness::Ready {
         return Err(RuntimePolicyBlock::ModelNotReady(model.readiness));
