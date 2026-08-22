@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::{fs, path::Path};
+use std::{fs, io::ErrorKind, path::Path};
 use tauri::{AppHandle, State};
 
 const USER_BACKUP_DIR: &str = "backups";
@@ -8,7 +8,7 @@ const USER_BACKUP_DIR: &str = "backups";
 #[serde(rename_all = "camelCase")]
 pub struct StartupStatus {
     mode: StartupMode,
-    managed_backup_count: usize,
+    managed_backup_count: Option<usize>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -25,7 +25,7 @@ impl StartupState {
     pub fn ready() -> Self {
         Self(StartupStatus {
             mode: StartupMode::Ready,
-            managed_backup_count: 0,
+            managed_backup_count: Some(0),
         })
     }
 
@@ -37,29 +37,35 @@ impl StartupState {
     }
 }
 
-fn managed_backup_count(app_data_dir: &Path) -> usize {
+fn managed_backup_count(app_data_dir: &Path) -> Option<usize> {
     let backup_dir = app_data_dir.join(USER_BACKUP_DIR);
-    let Ok(entries) = fs::read_dir(backup_dir) else {
-        return 0;
+    let entries = match fs::read_dir(backup_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Some(0),
+        Err(_) => return None,
     };
 
-    entries
-        .filter_map(Result::ok)
-        .filter(|entry| {
-            let Ok(file_type) = entry.file_type() else {
-                return false;
-            };
-            if !file_type.is_file() {
-                return false;
-            }
+    let mut count = 0;
+    for entry in entries {
+        let Ok(entry) = entry else {
+            return None;
+        };
+        let Ok(file_type) = entry.file_type() else {
+            return None;
+        };
+        if !file_type.is_file() {
+            continue;
+        }
 
-            let name = entry.file_name();
-            let Some(name) = name.to_str() else {
-                return false;
-            };
-            name.starts_with("bob-backup-") && name.ends_with(".sqlite3")
-        })
-        .count()
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        if name.starts_with("bob-backup-") && name.ends_with(".sqlite3") {
+            count += 1;
+        }
+    }
+    Some(count)
 }
 
 #[tauri::command]
@@ -90,8 +96,16 @@ mod tests {
         fs::create_dir(backups.join("bob-backup-directory.sqlite3"))?;
 
         let state = StartupState::recovery_required(directory.path());
-        assert_eq!(state.0.managed_backup_count, 2);
+        assert_eq!(state.0.managed_backup_count, Some(2));
         assert!(matches!(state.0.mode, StartupMode::RecoveryRequired));
+        Ok(())
+    }
+
+    #[test]
+    fn recovery_status_reports_zero_when_backup_directory_does_not_exist() -> anyhow::Result<()> {
+        let directory = tempfile::tempdir()?;
+        let state = StartupState::recovery_required(directory.path());
+        assert_eq!(state.0.managed_backup_count, Some(0));
         Ok(())
     }
 }
