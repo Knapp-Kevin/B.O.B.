@@ -6,7 +6,7 @@ const browserGeminiStatus: GeminiCredentialStatus = { configured: false, validat
 
 export type StartupStatus = {
   mode: "ready" | "recoveryRequired";
-  managedBackupCount: number;
+  managedBackupCount: number | null;
 };
 
 export async function loadStartupStatus(): Promise<StartupStatus> {
