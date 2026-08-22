@@ -17,6 +17,10 @@ function bindRetry(root: HTMLElement) {
   });
 }
 
+function focusRecoveryTitle(root: HTMLElement) {
+  root.querySelector<HTMLElement>("#startup-recovery-title")?.focus({ preventScroll: true });
+}
+
 export function renderStartupRecovery(status: StartupStatus) {
   const root = document.querySelector<HTMLElement>("#app");
   if (!root) return;
@@ -31,7 +35,7 @@ export function renderStartupRecovery(status: StartupStatus) {
     <main class="startup-recovery" aria-labelledby="startup-recovery-title">
       <section class="startup-recovery__card" role="alert">
         <p class="startup-recovery__eyebrow">B.O.B. protected your data</p>
-        <h1 id="startup-recovery-title">B.O.B. could not open your saved work.</h1>
+        <h1 id="startup-recovery-title" tabindex="-1">B.O.B. could not open your saved work.</h1>
         <p class="startup-recovery__lead">
           Your existing data has not been reset or replaced. B.O.B. stopped normal startup so the original can stay intact.
         </p>
@@ -47,6 +51,7 @@ export function renderStartupRecovery(status: StartupStatus) {
   `;
 
   bindRetry(root);
+  focusRecoveryTitle(root);
 }
 
 export function renderStartupStatusUnavailable() {
@@ -57,7 +62,7 @@ export function renderStartupStatusUnavailable() {
     <main class="startup-recovery" aria-labelledby="startup-recovery-title">
       <section class="startup-recovery__card" role="alert">
         <p class="startup-recovery__eyebrow">B.O.B. stopped startup safely</p>
-        <h1 id="startup-recovery-title">B.O.B. could not confirm your saved-work status.</h1>
+        <h1 id="startup-recovery-title" tabindex="-1">B.O.B. could not confirm your saved-work status.</h1>
         <p class="startup-recovery__lead">
           Normal work loading was stopped because B.O.B. could not verify whether canonical state was ready to use.
         </p>
@@ -75,4 +80,5 @@ export function renderStartupStatusUnavailable() {
   `;
 
   bindRetry(root);
+  focusRecoveryTitle(root);
 }
