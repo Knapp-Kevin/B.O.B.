@@ -1,3 +1,4 @@
+# Branch-local trigger for exact-head validation; remove after the diagnostic run.
 name: PR Rust diagnostic
 
 on:
