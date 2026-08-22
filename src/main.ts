@@ -6,7 +6,7 @@ import { installAccessibilityPreferencePersistence } from "./preferences";
 import { renderStartupRecovery, renderStartupStatusUnavailable } from "./recovery";
 
 async function bootstrap() {
-  let startup;
+  let startup: Awaited<ReturnType<typeof loadStartupStatus>>;
   try {
     startup = await loadStartupStatus();
   } catch (error) {
