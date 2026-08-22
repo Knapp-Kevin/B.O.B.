@@ -4,11 +4,12 @@ use crate::runtime::{
     RuntimeModelState, RuntimePolicyBlock, RuntimeReadiness, RuntimeStatus,
 };
 use anyhow::{Context, Result};
-use reqwest::Client;
+use reqwest::{redirect::Policy, Client};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 const OLLAMA_BASE_URL: &str = "http://127.0.0.1:11434";
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(120);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -78,6 +79,9 @@ pub struct OllamaLocalAdapter {
 impl OllamaLocalAdapter {
     pub fn new(model_id: impl Into<String>) -> Result<Self> {
         let client = Client::builder()
+            .no_proxy()
+            .redirect(Policy::none())
+            .connect_timeout(CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)
             .build()
             .context("build Ollama loopback client")?;
