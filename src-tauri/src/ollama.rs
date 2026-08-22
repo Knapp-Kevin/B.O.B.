@@ -36,6 +36,10 @@ struct TaggedModel {
     size: u64,
     #[serde(default)]
     digest: String,
+    #[serde(default)]
+    remote_model: String,
+    #[serde(default)]
+    remote_host: String,
     details: ModelDetails,
 }
 
@@ -148,14 +152,17 @@ impl OllamaLocalAdapter {
                 capabilities,
                 context_limit: None,
                 readiness: RuntimeReadiness::Ready,
-                approximate_memory_mib: local_evidence.then_some(tagged.size / (1024 * 1024)),
+                approximate_memory_mib: None,
                 accelerator_class: None,
             }),
             failure: (!text_generation).then_some(RuntimeFailure::UnsupportedCapability),
         }
     }
 
-    pub async fn generate_text(&self, prompt: &str) -> std::result::Result<String, OllamaAdapterError> {
+    pub async fn generate_text(
+        &self,
+        prompt: &str,
+    ) -> std::result::Result<String, OllamaAdapterError> {
         let status = self.status().await;
         validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only())
             .map_err(OllamaAdapterError::PolicyBlocked)?;
@@ -225,7 +232,10 @@ impl OllamaLocalAdapter {
             .json::<TagsResponse>()
             .await
             .map_err(|_| RuntimeFailure::InvalidResponse)?;
-        Ok(body.models.into_iter().find(|model| model.name == self.model_id))
+        Ok(body
+            .models
+            .into_iter()
+            .find(|model| model.name == self.model_id))
     }
 
     async fn fetch_show(&self) -> std::result::Result<ShowResponse, RuntimeFailure> {
@@ -280,7 +290,9 @@ fn unavailable_status(model_id: String, failure: RuntimeFailure) -> RuntimeStatu
 fn is_explicitly_local_model(model: &TaggedModel) -> bool {
     let name = model.name.to_ascii_lowercase();
     let obvious_cloud_route = name.ends_with(":cloud") || name.ends_with("-cloud");
+    let remote_route = !model.remote_model.trim().is_empty() || !model.remote_host.trim().is_empty();
     !obvious_cloud_route
+        && !remote_route
         && model.size > 0
         && !model.digest.trim().is_empty()
         && model.details.format.eq_ignore_ascii_case("gguf")
@@ -313,6 +325,8 @@ mod tests {
             name: name.to_owned(),
             size,
             digest: digest.to_owned(),
+            remote_model: String::new(),
+            remote_host: String::new(),
             details: ModelDetails {
                 format: format.to_owned(),
             },
@@ -345,6 +359,14 @@ mod tests {
             "a2af6cc3",
             "unknown"
         )));
+    }
+
+    #[test]
+    fn remote_metadata_never_classifies_local() {
+        let mut remote = tagged("custom-alias", 1, "digest", "gguf");
+        remote.remote_model = "gpt-oss:120b".to_owned();
+        remote.remote_host = "https://ollama.com".to_owned();
+        assert!(!is_explicitly_local_model(&remote));
     }
 
     #[test]
