@@ -110,7 +110,8 @@ mod tests {
     }
 
     #[test]
-    fn recovery_status_reports_unknown_when_backup_directory_cannot_be_read() -> anyhow::Result<()> {
+    fn recovery_status_reports_unknown_when_backup_directory_cannot_be_read() -> anyhow::Result<()>
+    {
         let directory = tempfile::tempdir()?;
         fs::write(directory.path().join(USER_BACKUP_DIR), b"not a directory")?;
 
