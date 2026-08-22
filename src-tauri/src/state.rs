@@ -608,6 +608,7 @@ mod tests {
         let expected = sample_state();
 
         store.save(&expected)?;
+
         assert_eq!(store.load()?, expected);
         Ok(())
     }
