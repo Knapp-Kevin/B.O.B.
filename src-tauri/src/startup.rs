@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::{fs, path::Path};
-use tauri::State;
+use tauri::{AppHandle, State};
 
 const USER_BACKUP_DIR: &str = "backups";
 
@@ -65,6 +65,14 @@ fn managed_backup_count(app_data_dir: &Path) -> usize {
 #[tauri::command]
 pub fn startup_status(state: State<'_, StartupState>) -> StartupStatus {
     state.0.clone()
+}
+
+#[tauri::command]
+pub fn restart_application(app: AppHandle) {
+    // A webview reload would preserve the immutable StartupState created during Tauri setup and
+    // could never recover from a transient Store-open failure. Restart the process so setup runs
+    // again and canonical state is re-evaluated from disk.
+    app.restart();
 }
 
 #[cfg(test)]
