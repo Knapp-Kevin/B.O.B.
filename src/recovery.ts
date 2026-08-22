@@ -5,8 +5,8 @@ export function renderStartupRecovery(status: StartupStatus) {
   if (!root) return;
 
   const backupCopy = status.managedBackupCount > 0
-    ? `${status.managedBackupCount} managed backup${status.managedBackupCount === 1 ? " is" : "s are"} available for recovery.`
-    : "No managed backup is currently available.";
+    ? `B.O.B. found ${status.managedBackupCount} managed backup file${status.managedBackupCount === 1 ? "" : "s"} to evaluate for recovery.`
+    : "B.O.B. did not find a managed backup file to evaluate for recovery.";
 
   root.innerHTML = `
     <main class="startup-recovery" aria-labelledby="startup-recovery-title">
