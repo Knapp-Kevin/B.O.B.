@@ -359,9 +359,7 @@ fn restore_connection_from_snapshot(connection: &mut Connection, snapshot: &Path
     let version = user_version(connection)?;
     if version != SCHEMA_VERSION {
         bail!(
-            "prepared restore snapshot schema {} does not match running schema {}",
-            version,
-            SCHEMA_VERSION
+            "prepared restore snapshot schema {version} does not match running schema {SCHEMA_VERSION}"
         );
     }
     Ok(())
@@ -432,9 +430,7 @@ fn run_migrations(
     let initial_version = user_version(connection)?;
     if initial_version > SCHEMA_VERSION {
         bail!(
-            "canonical state schema {} is newer than supported schema {}; refusing destructive downgrade",
-            initial_version,
-            SCHEMA_VERSION
+            "canonical state schema {initial_version} is newer than supported schema {SCHEMA_VERSION}; refusing destructive downgrade"
         );
     }
 
@@ -494,23 +490,19 @@ fn run_migrations(
                      PRAGMA user_version = 3;",
                 )
                 .context("apply schema migration 3")?,
-            other => bail!("no migration path exists from schema version {}", other),
+            other => bail!("no migration path exists from schema version {other}"),
         }
 
         transaction.commit().context("commit schema migration")?;
         let next_version = user_version(connection)?;
         if next_version <= version {
-            bail!("schema migration did not advance from version {}", version);
+            bail!("schema migration did not advance from version {version}");
         }
         version = next_version;
     }
 
     if version != SCHEMA_VERSION {
-        bail!(
-            "schema migration ended at version {}, expected {}",
-            version,
-            SCHEMA_VERSION
-        );
+        bail!("schema migration ended at version {version}, expected {SCHEMA_VERSION}");
     }
     quick_check(connection)?;
     Ok(())
@@ -527,7 +519,7 @@ fn quick_check(connection: &Connection) -> Result<()> {
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .context("run SQLite quick_check")?;
     if result != "ok" {
-        bail!("SQLite integrity check failed: {}", result);
+        bail!("SQLite integrity check failed: {result}");
     }
     Ok(())
 }
@@ -616,7 +608,6 @@ mod tests {
         let expected = sample_state();
 
         store.save(&expected)?;
-
         assert_eq!(store.load()?, expected);
         Ok(())
     }
