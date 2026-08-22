@@ -29,6 +29,8 @@ async function bootstrap() {
     if (preferences) applyAccessibilityPreferences(preferences);
   } catch (error) {
     console.error("Failed to load durable B.O.B. local state", error);
+    renderStartupStatusUnavailable();
+    return;
   }
 
   installAccessibilityPreferencePersistence();
