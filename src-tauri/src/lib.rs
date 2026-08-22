@@ -4,6 +4,7 @@ mod export;
 mod gemini;
 mod planner;
 mod proposals;
+pub mod runtime;
 mod secrets;
 mod state;
 mod work;
