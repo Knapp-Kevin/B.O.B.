@@ -1,4 +1,4 @@
-import type { StartupStatus } from "./native";
+import { restartApplication, type StartupStatus } from "./native";
 
 export function renderStartupRecovery(status: StartupStatus) {
   const root = document.querySelector<HTMLElement>("#app");
@@ -20,14 +20,25 @@ export function renderStartupRecovery(status: StartupStatus) {
         <div class="startup-recovery__actions">
           <button class="button primary" type="button" data-retry-startup>Try again</button>
         </div>
-        <p class="startup-recovery__note">
+        <p class="startup-recovery__note" data-recovery-note>
           Recovery is fail-closed. B.O.B. will not choose or restore a backup automatically.
         </p>
       </section>
     </main>
   `;
 
-  root.querySelector<HTMLButtonElement>("[data-retry-startup]")?.addEventListener("click", () => {
-    window.location.reload();
+  const retry = root.querySelector<HTMLButtonElement>("[data-retry-startup]");
+  const note = root.querySelector<HTMLElement>("[data-recovery-note]");
+  retry?.addEventListener("click", () => {
+    retry.disabled = true;
+    retry.textContent = "Restarting…";
+
+    void restartApplication().catch(() => {
+      retry.disabled = false;
+      retry.textContent = "Try again";
+      if (note) {
+        note.textContent = "B.O.B. could not restart automatically. Close and reopen B.O.B. to try again.";
+      }
+    });
   });
 }
