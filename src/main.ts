@@ -3,10 +3,18 @@ import { render } from "./controller";
 import { applyAccessibilityPreferences, applyPlanProjection, hydratePersistentWorkState, state } from "./model";
 import { loadAccessibilityPreferences, loadGeminiCredentialStatus, loadPersistentWorkState, loadStartupStatus, planRemainingWork } from "./native";
 import { installAccessibilityPreferencePersistence } from "./preferences";
-import { renderStartupRecovery } from "./recovery";
+import { renderStartupRecovery, renderStartupStatusUnavailable } from "./recovery";
 
 async function bootstrap() {
-  const startup = await loadStartupStatus();
+  let startup;
+  try {
+    startup = await loadStartupStatus();
+  } catch (error) {
+    console.error("Failed to confirm B.O.B. startup status", error);
+    renderStartupStatusUnavailable();
+    return;
+  }
+
   if (startup.mode === "recoveryRequired") {
     renderStartupRecovery(startup);
     return;
