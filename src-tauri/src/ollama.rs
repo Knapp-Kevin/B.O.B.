@@ -290,7 +290,8 @@ fn unavailable_status(model_id: String, failure: RuntimeFailure) -> RuntimeStatu
 fn is_explicitly_local_model(model: &TaggedModel) -> bool {
     let name = model.name.to_ascii_lowercase();
     let obvious_cloud_route = name.ends_with(":cloud") || name.ends_with("-cloud");
-    let remote_route = !model.remote_model.trim().is_empty() || !model.remote_host.trim().is_empty();
+    let remote_route =
+        !model.remote_model.trim().is_empty() || !model.remote_host.trim().is_empty();
     !obvious_cloud_route
         && !remote_route
         && model.size > 0
