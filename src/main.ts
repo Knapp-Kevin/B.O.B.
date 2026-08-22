@@ -1,10 +1,17 @@
 import "./styles.css";
 import { render } from "./controller";
 import { applyAccessibilityPreferences, applyPlanProjection, hydratePersistentWorkState, state } from "./model";
-import { loadAccessibilityPreferences, loadGeminiCredentialStatus, loadPersistentWorkState, planRemainingWork } from "./native";
+import { loadAccessibilityPreferences, loadGeminiCredentialStatus, loadPersistentWorkState, loadStartupStatus, planRemainingWork } from "./native";
 import { installAccessibilityPreferencePersistence } from "./preferences";
+import { renderStartupRecovery } from "./recovery";
 
 async function bootstrap() {
+  const startup = await loadStartupStatus();
+  if (startup.mode === "recoveryRequired") {
+    renderStartupRecovery(startup);
+    return;
+  }
+
   try {
     const [durable, preferences] = await Promise.all([
       loadPersistentWorkState(),
