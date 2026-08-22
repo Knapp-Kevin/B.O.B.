@@ -108,4 +108,14 @@ mod tests {
         assert_eq!(state.0.managed_backup_count, Some(0));
         Ok(())
     }
+
+    #[test]
+    fn recovery_status_reports_unknown_when_backup_directory_cannot_be_read() -> anyhow::Result<()> {
+        let directory = tempfile::tempdir()?;
+        fs::write(directory.path().join(USER_BACKUP_DIR), b"not a directory")?;
+
+        let state = StartupState::recovery_required(directory.path());
+        assert_eq!(state.0.managed_backup_count, None);
+        Ok(())
+    }
 }
