@@ -135,6 +135,7 @@ impl RuntimeInvocationPolicy {
 pub enum RuntimePolicyBlock {
     Unavailable,
     Unauthenticated,
+    InconsistentAuthentication,
     ReportedFailure(RuntimeFailure),
     BillingClassUnknown,
     MeteredDisabled,
@@ -154,11 +155,19 @@ pub fn validate_runtime_for_inference(
         return Err(RuntimePolicyBlock::ReportedFailure(failure));
     }
 
-    match status.auth_state {
-        AuthState::NotRequired | AuthState::Ready => {}
-        AuthState::Missing | AuthState::Expired | AuthState::Invalid | AuthState::Unknown => {
-            return Err(RuntimePolicyBlock::Unauthenticated)
+    match (status.auth_mechanism, status.auth_state) {
+        (AuthMechanism::None, AuthState::NotRequired) => {}
+        (
+            AuthMechanism::ApiKey | AuthMechanism::AccountSession | AuthMechanism::RuntimeToken,
+            AuthState::Ready,
+        ) => {}
+        (AuthMechanism::None, _) | (_, AuthState::NotRequired) => {
+            return Err(RuntimePolicyBlock::InconsistentAuthentication)
         }
+        (
+            AuthMechanism::ApiKey | AuthMechanism::AccountSession | AuthMechanism::RuntimeToken,
+            AuthState::Missing | AuthState::Expired | AuthState::Invalid | AuthState::Unknown,
+        ) => return Err(RuntimePolicyBlock::Unauthenticated),
     }
 
     match status.billing_class {
@@ -234,6 +243,34 @@ mod tests {
         assert_eq!(
             validate_runtime_for_inference(&local_status(), RuntimeInvocationPolicy::local_only()),
             Ok(())
+        );
+    }
+
+    #[test]
+    fn credential_mechanism_cannot_report_auth_not_required() {
+        let mut status = cloud_status();
+        status.auth_state = AuthState::NotRequired;
+
+        assert_eq!(
+            validate_runtime_for_inference(
+                &status,
+                RuntimeInvocationPolicy {
+                    cloud_allowed: true,
+                    ..RuntimeInvocationPolicy::local_only()
+                }
+            ),
+            Err(RuntimePolicyBlock::InconsistentAuthentication)
+        );
+    }
+
+    #[test]
+    fn credential_free_mechanism_cannot_report_auth_ready() {
+        let mut status = local_status();
+        status.auth_state = AuthState::Ready;
+
+        assert_eq!(
+            validate_runtime_for_inference(&status, RuntimeInvocationPolicy::local_only()),
+            Err(RuntimePolicyBlock::InconsistentAuthentication)
         );
     }
 
