@@ -1,0 +1,34 @@
+name: PR Rust diagnostic
+
+on:
+  pull_request:
+    paths:
+      - "src-tauri/**"
+      - ".github/workflows/pr-rust-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust-diagnostic:
+    name: Rust diagnostic (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.88 with validation components
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.88"
+          components: rustfmt, clippy
+
+      - name: Cargo format check
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
+      - name: Cargo clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: Cargo tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
