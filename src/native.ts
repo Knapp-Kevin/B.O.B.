@@ -14,6 +14,14 @@ export async function loadStartupStatus(): Promise<StartupStatus> {
   return invoke<StartupStatus>("startup_status");
 }
 
+export async function restartApplication(): Promise<void> {
+  if (!isTauriRuntime()) {
+    window.location.reload();
+    return;
+  }
+  return invoke<void>("restart_application");
+}
+
 export async function loadPersistentWorkState(): Promise<PersistentWorkState | null> {
   if (!isTauriRuntime()) return null;
   return invoke<PersistentWorkState>("load_work_state");
