@@ -21,9 +21,11 @@ export function renderStartupRecovery(status: StartupStatus) {
   const root = document.querySelector<HTMLElement>("#app");
   if (!root) return;
 
-  const backupCopy = status.managedBackupCount > 0
-    ? `B.O.B. found ${status.managedBackupCount} managed backup file${status.managedBackupCount === 1 ? "" : "s"} to evaluate for recovery.`
-    : "B.O.B. did not find a managed backup file to evaluate for recovery.";
+  const backupCopy = status.managedBackupCount === null
+    ? "B.O.B. could not check the managed backup folder, so backup availability is unknown."
+    : status.managedBackupCount > 0
+      ? `B.O.B. found ${status.managedBackupCount} managed backup file${status.managedBackupCount === 1 ? "" : "s"} to evaluate for recovery.`
+      : "B.O.B. did not find a managed backup file to evaluate for recovery.";
 
   root.innerHTML = `
     <main class="startup-recovery" aria-labelledby="startup-recovery-title">
