@@ -73,6 +73,10 @@ struct GenerateResponse {
     response: String,
     #[serde(default)]
     done: bool,
+    #[serde(default)]
+    remote_model: String,
+    #[serde(default)]
+    remote_host: String,
 }
 
 pub struct OllamaLocalAdapter {
@@ -194,6 +198,11 @@ impl OllamaLocalAdapter {
             .json::<GenerateResponse>()
             .await
             .map_err(|_| OllamaAdapterError::Runtime(RuntimeFailure::InvalidResponse))?;
+        if generation_is_remote(&body) {
+            return Err(OllamaAdapterError::PolicyBlocked(
+                RuntimePolicyBlock::LocalityBlocked,
+            ));
+        }
         let text = body.response.trim().to_owned();
         if !body.done || text.is_empty() {
             return Err(OllamaAdapterError::Runtime(RuntimeFailure::InvalidResponse));
@@ -299,6 +308,10 @@ fn is_explicitly_local_model(model: &TaggedModel) -> bool {
         && model.details.format.eq_ignore_ascii_case("gguf")
 }
 
+fn generation_is_remote(response: &GenerateResponse) -> bool {
+    !response.remote_model.trim().is_empty() || !response.remote_host.trim().is_empty()
+}
+
 fn map_capabilities(capabilities: &[String]) -> Vec<RuntimeCapability> {
     let mut mapped = Vec::new();
     if capabilities.iter().any(|value| value == "completion") {
@@ -384,6 +397,17 @@ mod tests {
             "digest",
             "gguf"
         )));
+    }
+
+    #[test]
+    fn remote_generation_response_is_rejected() {
+        let response = GenerateResponse {
+            response: "must not be accepted".to_owned(),
+            done: true,
+            remote_model: "gpt-oss:120b".to_owned(),
+            remote_host: "https://ollama.com".to_owned(),
+        };
+        assert!(generation_is_remote(&response));
     }
 
     #[test]
