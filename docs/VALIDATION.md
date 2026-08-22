@@ -112,13 +112,18 @@ Build it on Windows with:
 npm run package:windows
 ```
 
+The packaging script deliberately runs a targeted `cargo clean --manifest-path src-tauri/Cargo.toml -p bob` before invoking the Tauri NSIS build. This is required release evidence, not optional housekeeping: native validation on PR #83 demonstrated that a warm Cargo target can otherwise reuse stale Tauri resource objects after application-icon changes. The targeted clean removes B.O.B.'s package artifacts without turning routine packaging into a full dependency-cache purge.
+
 Acceptance requires:
 
-- installer is produced successfully;
+- installer is produced successfully from the targeted-clean packaging path;
+- the packaged executable embeds the canonical current application icon/resources rather than a warm-target predecessor;
 - default per-user installation works without unnecessary administrator elevation;
 - installed application launches;
 - local canonical state is stored in the application data location rather than the install directory;
 - uninstall completes without claiming to remove user data unless that behavior is explicitly implemented and documented.
+
+When collecting Windows shell/icon evidence, account for Explorer/icon caching separately from the executable's embedded resource so cached presentation is not mistaken for build output.
 
 MSI is deferred for the first alpha. It duplicates the installer surface and adds WiX/VBScript requirements without a current product requirement.
 
